@@ -34,14 +34,16 @@ class TestDateRange {
 
     @Test
     void testOverlapsTrue() {
-        // TODO: check we can see when two date ranges overlap
-        fail();
+        assert(dateRange1.overlaps(dateRange2));
+        assert(dateRange2.overlaps(dateRange1));
+        //self overlap
+        assert(dateRange3.overlaps(dateRange3));
     }
 
     @Test
     void testOverlapsFalse() {
-        // TODO: check we can see when two date ranges  don't overlap
-        fail();
+        assertFalse(dateRange1.overlaps(dateRange3));
+        assertFalse(dateRange2.overlaps(dateRange3));
     }
 
     // TODO: put some of your own unit tests here

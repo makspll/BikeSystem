@@ -17,15 +17,12 @@ public class Location {
         assert ( this.postcode != null       && otherPostcode != null       );
         assert ( this.postcode.length() >= 2 && otherPostcode.length() >= 2 );
         
-        boolean nearEachOther = false;											// First, we set the return value to false. 
-        
-        if (this.postcode.charAt(0) == otherPostcode.charAt(0)) {
-        	if (this.postcode.charAt(1) == otherPostcode.charAt(1)) {           // Because char is a primitive type, using "==" does the job.
-        		nearEachOther = true;											// We set the return value to true, only if the first two chars match.
-        	}
+        if (this.postcode.substring(0,2).equals(otherPostcode.substring(0,2))) { //check the first 2 chars are the same
+            return true;    //if so, we're near enough
         }
-        
-        return nearEachOther;                                                   // We return the boolean value we computed.  
+        else{
+            return false;   //if not, we're not near enough
+        }
     }
 
     public String getPostcode() {

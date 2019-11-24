@@ -1,10 +1,13 @@
 package uk.ac.ed.bikerental;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoField;
 import java.util.Collection;
 import java.util.HashMap;
+import java.time.temporal.ChronoUnit;
 
 public class MultidayRateDiscountPolicy implements PricingPolicy {
 	
@@ -15,7 +18,7 @@ public class MultidayRateDiscountPolicy implements PricingPolicy {
 	private int mediumDiscountPercentage;
 	private int maxDiscountPercentage;
 	
-	HashMap<BikeType , BigDecimal> prices = new HashMap<BikeType , BigDecimal>();
+	HashMap<Utils.EBikeType , BigDecimal> prices = new HashMap<Utils.EBikeType , BigDecimal>();
 	// This class doesn't need to know who the provider is. The provider just needs to know that this is their pricing policy. 
 
 	public MultidayRateDiscountPolicy(int maxNo, int maxSmall, int maxMed, int discount) {
@@ -30,7 +33,7 @@ public class MultidayRateDiscountPolicy implements PricingPolicy {
 	@Override
 	public void setDailyRentalPrice(BikeType bikeType, BigDecimal dailyPrice) {
 	
-		prices.put(bikeType, dailyPrice);
+		prices.put(bikeType.getType(), dailyPrice);
 		
 	}
 
@@ -38,41 +41,39 @@ public class MultidayRateDiscountPolicy implements PricingPolicy {
 	public BigDecimal calculatePrice(Collection<Bike> bikes, DateRange duration) {
 		
 		BigDecimal price = new BigDecimal(0);
-		
+
 		for (Bike b : bikes) {
-			price = price.add(prices.get(b.getType()));		
+			assert(prices.containsKey(b.getBikeType().getType()));
+			price = price.add(prices.get(b.getBikeType().getType()));		
 		}
 		
-		int numDays = computeNumDays(duration);
-		
-		assert(numDays > 0);                                                    // It would be very surprising if this test failed. But better safe than sorry. 
+		int daysInt = computeNumDays(duration);
+		BigDecimal numDays = new BigDecimal(daysInt);
+
+
+		//TODO you forgot to multiply by the number of days, ya prick
+		price = price.multiply(numDays);
+
+		assert(numDays.compareTo(BigDecimal.ZERO) >= 0);                                                    // It would be very surprising if this test failed. But better safe than sorry. 
 		
 		BigDecimal multiplicand;
-		if (numDays <= maxDaysNoDiscount) {
+		if (daysInt <= maxDaysNoDiscount) {
 			multiplicand = new BigDecimal(1);
-		} else if (numDays <= maxDaysSmallDiscount) {
-			multiplicand = new BigDecimal(1.0 - ((double) smallDiscountPercentage) / 100.0);
-		} else if(numDays <= maxDaysMediumDiscount) {
-			multiplicand = new BigDecimal(1.0 - ((double) mediumDiscountPercentage) / 100.0);
+		} else if (daysInt <= maxDaysSmallDiscount) {
+			multiplicand = new BigDecimal(1.0d - ((double) smallDiscountPercentage) / 100.0d);
+		} else if(daysInt <= maxDaysMediumDiscount) {
+			multiplicand = new BigDecimal(1.0d - ((double) mediumDiscountPercentage) / 100.0d);
 		} else {
-			multiplicand = new BigDecimal(1.0 - ((double) maxDiscountPercentage) / 100.0);
+			multiplicand = new BigDecimal(1.0d - ((double) maxDiscountPercentage) / 100.0d);
 		}
 		
 		price = price.multiply(multiplicand);
+		price = price.setScale(2,RoundingMode.HALF_EVEN);
 		return price;
 	}
 
 	public int computeNumDays(DateRange duration) {
-		LocalDate start = duration.getStart();
-		LocalDate end = duration.getEnd();
-		
-		int startDay = start.get(ChronoField.EPOCH_DAY);
-		int endDay = end.get(ChronoField.EPOCH_DAY);
-		
-		int difference = endDay - startDay;
-		
-		assert(difference >= 0);
-		
+		int difference = (int)duration.toDays();
 		return difference + 1;                                                  // We add 1 to the difference to get the number of days. 
 		                                                                        // Otherwise one could book a bike from 8 a.m. to 8 p.m. for free
 	}
