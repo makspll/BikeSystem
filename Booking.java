@@ -9,16 +9,18 @@ import uk.ac.ed.bikerental.Utils.EBookingStatus;
 
 public class Booking {
 
-	private String orderCode;
+	private int orderCode;
 	private BigDecimal deposit;
 	private BigDecimal price;
 	private EBookingStatus status;
-	private LinkedList<String> bikeCodes;
+	private LinkedList<Integer> bikeCodes;
 	private LocalDate expiryDate;
 	private BikeProvider providerID;
 	
-	public Booking(String pCode, BigDecimal pDeposit, BigDecimal pPrice , LinkedList<String> pBikeCodes , LocalDate pExpiryDate, BikeProvider pProviderID) {
-		orderCode = pCode;
+	private static int UNIQUE_CODE_COUNT = 0;
+	
+	public Booking(BigDecimal pDeposit, BigDecimal pPrice , LinkedList<Integer> pBikeCodes , LocalDate pExpiryDate, BikeProvider pProviderID) {
+		orderCode = ++UNIQUE_CODE_COUNT;									// This might work for now. 
 		deposit = pDeposit;
 		price = pPrice;
 		status = EBookingStatus.BOOKED;
@@ -45,5 +47,8 @@ public class Booking {
 				break;
 		}
 	}
+	
+	public int getOrderCode() { return orderCode; }
+	public EBookingStatus getStatus() { return status; }
 	
 }
