@@ -20,8 +20,8 @@ public class BikeProvider {
 	private float depositRate;
 	private String phoneNumber;
 	private String openingTimes;
-	
-	private HashMap<EBikeType, BigDecimal> typePrices;
+	private PricingPolicy pPolicy;
+	private ValuationPolicy vPolicy;
 	
 	public BikeProvider(int pID, Location pLoc, float pRate, String pPhone, String pOpeningTimes) {
 		allBookings = new LinkedList<Booking>();
@@ -32,6 +32,8 @@ public class BikeProvider {
 		depositRate = pRate;
 		phoneNumber = pPhone;
 		openingTimes = pOpeningTimes;
+		pPolicy = new StandardPricingPolicy();
+		vPolicy = new StandardValuationPolicy();
 	}
 	
 	public boolean canAccomodateRental(DateRange dr, Collection<EBikeType> expectedBikeTypes) {
@@ -60,31 +62,37 @@ public class BikeProvider {
 	
 	public Quote createQuote(DateRange dr, Collection<EBikeType> pBikes) throws Exception {
 		
-		BigDecimal quotePrice = new BigDecimal(0);
+		// Do we assume that the booking can be created at this point? Yea right? Assert that here again? 
+		// Like this
+		assert(this.canAccomodateRental(dr, pBikes));
 		
-		for (EBikeType bt : pBikes) {											// Polymorphism boiiiii
-			if (!typePrices.containsKey(bt)) {
-				throw new Exception("This provider has not set a price for the required bike type.");
-			} else {
-				quotePrice = quotePrice.add(typePrices.get(bt));
-			}
-			
-		}
-		
-		// TODO: Compute Deposit, which should just be the depositRate times the replacement value of the type, which we will get from BikeRentalSystem
-		
+		LinkedList<Bike> bikesInTheQuote = new LinkedList<Bike>();
 		BigDecimal deposit = new BigDecimal(0);
 		
-		assert(false);
+		for (EBikeType type : pBikes) {
+			for (Bike bike : bikes) {
+				if (bike.isAvailable(dr) && bike.getBikeType().getType() == type && doesNotYetContain(bikesInTheQuote , bike)) {
+					bikesInTheQuote.add(bike);
+					deposit = deposit.add(vPolicy.calculateValue(bike, bike.manufactureDate));
+				}
+			}
+		}
 		
-		Quote q = new Quote(this, quotePrice, deposit, dr);
+		BigDecimal quotePrice = pPolicy.calculatePrice(bikesInTheQuote, dr);
+		
+		Quote q = new Quote(this, quotePrice, deposit, bikesInTheQuote, dr);
 		
 		return q;
 		
 	}
 	
-	public void setPriceForType(EBikeType type, BigDecimal price) {
-		typePrices.put(type, price);
+	private boolean doesNotYetContain(Collection<Bike> bikes, Bike bike) {
+		
+		for (Bike b : bikes) {
+			if (b.getCode() == bike.getCode()) return false;
+		}
+		
+		return true;
 	}
 	
 	public Booking createBooking(Quote q, QuoteInformation qInfo) {
@@ -92,7 +100,7 @@ public class BikeProvider {
 		LinkedList<Integer> bikeCodes = new LinkedList<Integer>();
 		
 		for (Bike b : q.getBikes()) {
-			bikeCodes.addLast(b.code);
+			bikeCodes.add(b.getCode());
 		}
 		
 		Booking booking = new Booking(q.getDeposit(), q.getPrice(), bikeCodes, q.getDates().getEnd(), this);

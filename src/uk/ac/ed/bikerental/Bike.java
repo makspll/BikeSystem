@@ -1,9 +1,11 @@
 package uk.ac.ed.bikerental;
 
 import java.time.LocalDate;
+import java.util.LinkedList;
 import java.util.Objects;;
 
 public class Bike implements Deliverable {
+	LinkedList<Booking> bookings;
     BikeType type;
     LocalDate manufactureDate;
     Utils.ECondition condition;
@@ -22,6 +24,7 @@ public class Bike implements Deliverable {
         condition = cond;
         Available = true;
         code = Objects.hash(type,manufactureDate,condition,code);
+        bookings = new LinkedList<Booking>();
     }
 
     ///getters
@@ -29,8 +32,10 @@ public class Bike implements Deliverable {
         return code;
     }
 
-    public boolean isAvailable()
+    public boolean isAvailable(DateRange dates)
     {
+    	// TODO: Takes a DateRange
+    	assert(false);
         return Available;
     }
 
@@ -75,6 +80,14 @@ public class Bike implements Deliverable {
         }
 
         return (code == ((Bike)obj).getCode());
+    }
+    
+    public void addBooking(Booking b) {
+    	bookings.addLast(b);
+    }
+    
+    public void removeBooking(Booking b) {
+    	// TODO : Write this
     }
 
     ///private parts
