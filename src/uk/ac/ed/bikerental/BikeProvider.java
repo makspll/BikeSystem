@@ -34,7 +34,7 @@ public class BikeProvider {
 		openingTimes = pOpeningTimes;
 	}
 	
-	public boolean canAccomodateRental(DateRange dr, Queue<EBikeType> expectedBikeTypes) {
+	public boolean canAccomodateRental(DateRange dr, Collection<EBikeType> expectedBikeTypes) {
 		
 		HashMap<EBikeType, Integer> remainingNumOfBikesPerType = new HashMap<EBikeType, Integer>();
 		
