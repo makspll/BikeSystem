@@ -141,8 +141,6 @@ public class BikeProvider {
 		return null; // Our compiler doesn't understand why we don't actually have to add this. It doesn't hurt either.
 	}
 	
-	private void updateBikeStatus(int bikeID) {
-		// u wot m8 wot dis do
-		assert(false);
-	}
+	public Location getLocation() { return location; }
+	
 }
