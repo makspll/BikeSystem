@@ -16,7 +16,6 @@ public class BikeProvider {
 	private Location location;
 	private List<Bike> bikes;
 	private List<BikeProvider> partners;
-	private float depositRate;
 	private String phoneNumber;
 	private String openingTimes;
 	private PricingPolicy pPolicy;
@@ -24,13 +23,12 @@ public class BikeProvider {
 	
 
 	///constructors
-	public BikeProvider(int pID, Location pLoc, float pRate, String pPhone, String pOpeningTimes, ValuationPolicy vPol, PricingPolicy pPol) {
+	public BikeProvider(int pID, Location pLoc,  String pPhone, String pOpeningTimes, ValuationPolicy vPol, PricingPolicy pPol) {
 		allBookings = new ArrayList<Booking>();
 		providerID = pID;
 		location = pLoc;
 		bikes = new ArrayList<Bike>();
 		partners = new ArrayList<BikeProvider>();
-		depositRate = pRate;
 		phoneNumber = pPhone;
 		openingTimes = pOpeningTimes;
 		pPolicy = pPol;
@@ -38,10 +36,6 @@ public class BikeProvider {
 	}
 	
 	///getters setters
-	public float getDepositRate()
-	{
-		return depositRate;
-	}
 
 	public String getPhoneNumber()
 	{

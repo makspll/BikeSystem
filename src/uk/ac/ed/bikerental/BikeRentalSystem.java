@@ -19,7 +19,10 @@ public class BikeRentalSystem {
 	private DeliveryService deliveryService;
 	private LocalDate currentDate;
 
-	static int UNIQUE_ID_COUNTER;
+	public List<BikeProvider> getProviders() { return bikeProviders; }
+	public List<BikeType> getBikeTypes() { return bikeTypes; }
+	
+	static int UNIQUE_ID_COUNTER = 0;
 	public BikeRentalSystem(DeliveryService ds, LocalDate dateInitial)
 	{
 		bikeProviders = new ArrayList<BikeProvider>();
@@ -27,6 +30,7 @@ public class BikeRentalSystem {
 		deliveryService = ds;
 		currentDate = dateInitial;
 	}
+	
 	public void registerBikeType(EBikeType Ebt, BigDecimal replacementVal) throws Exception
 	{
 		for(BikeType bt : bikeTypes)
@@ -41,15 +45,19 @@ public class BikeRentalSystem {
 		bikeTypes.add(newBt);
 	}
 
-	public Bike registerBike(BikeType bt, ECondition cond, LocalDate madeOn)
+	public Bike registerBike(BikeType bt, ECondition cond, LocalDate madeOn) throws Exception
 	{
+		if (!bikeTypes.contains(bt)) {
+			throw new Exception("Cannot add a bike of an unregistered type.");
+		}
+		
 		Bike newBike = new Bike(bt,madeOn,cond);
 		return newBike;
 	}
 
-	public void registerProvider(Location loc, float depositR, String phone, String openingTimes, ValuationPolicy vp, PricingPolicy pp)
+	public void registerProvider(Location loc, String phone, String openingTimes, ValuationPolicy vp, PricingPolicy pp)
 	{
-		BikeProvider bp = new BikeProvider(++UNIQUE_ID_COUNTER,loc,depositR,phone,openingTimes,vp,pp);
+		BikeProvider bp = new BikeProvider(++UNIQUE_ID_COUNTER,loc,phone,openingTimes,vp,pp);
 		bikeProviders.add(bp);
 	}
 	
