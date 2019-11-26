@@ -4,9 +4,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
-import java.util.function.BooleanSupplier;
-
-import javax.lang.model.util.ElementScanner6;
 
 public class DateRange {
     private LocalDate start, end;

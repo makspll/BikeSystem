@@ -1,7 +1,7 @@
 package uk.ac.ed.bikerental;
 
 import java.math.BigDecimal;
-import java.util.Objects;
+import java.math.RoundingMode;;
 
 public class BikeType {
     private Utils.EBikeType type;
@@ -11,7 +11,7 @@ public class BikeType {
     public BikeType(Utils.EBikeType t, BigDecimal replacementValue)
     {
         type = t; 
-        fullReplacementValue= replacementValue;
+        fullReplacementValue= replacementValue.setScale(2,RoundingMode.HALF_UP);
     }
 
     ///getters

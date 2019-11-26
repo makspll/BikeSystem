@@ -1,6 +1,8 @@
 package uk.ac.ed.bikerental;
 
-import java.utils.List;
+import java.util.List;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class Invoice
 {
@@ -8,24 +10,24 @@ public class Invoice
     String orderSummary;
     BigDecimal deposit;
     BigDecimal price;
-    List<int> bikeCodes;
+    List<Integer> bikeCodes;
     Location returnLocation;
     Location pickupLocation;
-    Utils.EColllectionMode collectionMode;
+    Utils.ECollectionMode collectionMode;
     LocalDate returnDate;
 
 
     ///constructors
-    public Invoice(int oc, String summary,
+    public Invoice(int orderNumber, String summary,
                     BigDecimal dep,
                     BigDecimal pri,
-                    List<Int> bikes,
+                    List<Integer> bikes,
                     Location returnL,
                     Location pickupL,
-                    Utils.EColllectionMode cMode,
+                    Utils.ECollectionMode cMode,
                     LocalDate returnBy)
     {
-        orderCode = oc;
+        orderCode = orderNumber;
         orderSummary = summary;
         deposit = dep;
         price = pri;
@@ -57,7 +59,7 @@ public class Invoice
         return price;
     }
 
-    public List<int> getBikeCodes()
+    public List<Integer> getBikeCodes()
     {
         return bikeCodes;
     }
@@ -72,7 +74,7 @@ public class Invoice
         return pickupLocation;
     }
 
-    public Utils.EColllectionMode getCollectionMode()
+    public Utils.ECollectionMode getCollectionMode()
     {
         return collectionMode;
     }

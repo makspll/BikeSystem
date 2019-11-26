@@ -1,8 +1,8 @@
 package uk.ac.ed.bikerental;
 
-public class Utils
+public final class Utils
 {
-    enum EBikeType
+    public enum EBikeType
     {
         HYBRID,
         ROAD,
@@ -10,32 +10,26 @@ public class Utils
         ELECTRIC
     }
 
-    enum ECollectionMode
+    public enum ECollectionMode
     {
         PICKUP,
         DELIVERY
     }
 
-    enum EBookingStatus
+    public enum EBookingStatus
     {
         BOOKED,
-        PICKED_UP,
-        BIKES_ON_WAY_BACK,
+        DELIVERY_TO_CLIENT,
+        BIKES_AWAY,
+        DELIVERY_TO_PROVIDER,
         RETURNED
     }
 
-    enum ECondition
+    public enum ECondition
     {
         NEW,
         GOOD,
         AVERAGE,
         BAD
-    }
-
-    public class QuoteInformation
-    {
-        public String name,surname,phone;
-        public Location address;
-        public ECollectionMode collectionMode;
     }
 }

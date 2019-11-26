@@ -1,9 +1,11 @@
 package uk.ac.ed.bikerental;
 
-import java.utils.List;
+import java.util.List;
+import java.util.ArrayList;
+import uk.ac.ed.bikerental.Utils.EBikeType;
+import uk.ac.ed.bikerental.BikeRentalSystem;
 
-
-public class customer
+public class Customer
 {
     private List<Invoice> currentInvoices;
     public BikeRentalSystem bikeSystem;
@@ -15,55 +17,63 @@ public class customer
 
     ///private parts
 
+    
     public List<Quote> findQuotes(DateRange dates,
-                                    List<Bike> bikes,
+                                    List<EBikeType> bikes,
                                     Location location)
     {
-        List<Quote> quotesAvailable = bikeSystem.getQuotes(dates,bikes,location);
-        if(quotesAvailable.size() > 0)      // if we find some quotes
+        List<Quote> quotesAvailable;
+        try{
+            quotesAvailable = bikeSystem.getQuotes(dates,bikes,location);
+        }catch(Exception e)
+        {
+            quotesAvailable = null;
+        }
+        if(quotesAvailable != null && quotesAvailable.size() > 0)      // if we find some quotes
         {
             return quotesAvailable;
-            //this would be displayed to the user here
         }
         else        // if we cant find any quotes satisfying our needs , return empty list
         {
-            return new List<Quote>(0);
-            //in the normal system, this would be displayed to the user
+            List<Quote> empty = new ArrayList<Quote>(0);
+            return empty;
+
 
         }
     }
 
-    public boolean orderQuote(Quote q, Utils.QuoteInformation quoteInfo)
+    public boolean orderQuote(Quote q, QuoteInformation quoteInfo)
     {
         //withing book quote the system prompts the user to pay
-        Invoice possibleInvoice = bikeSystem.bookQuote(q,quoteInfo);
-        if(possibleInvoice != null) //if the invoice is null, we cant book the quote, system state has changed 
+        Invoice invoice;
+        try{
+            invoice = bikeSystem.bookQuote(q, quoteInfo);
+        }catch(Exception e)
         {
-            currentInvoices.add(possibleInvoice);
+            invoice = null;
+        }
+
+        if(invoice != null) //if the invoice is null, we cant book the quote, system state has changed 
+        {
+            currentInvoices.add(invoice);
             return true;
         }
         else
         {
             //we couldnt order the quote
-            return false
-            //in the normal system I/O would happen here
+            return false;
         }
     }
 
     // tells the system if the user needs a new selection of quotes,
     //in the actual system the boolean parameter wouldnt be required
-    public boolean evaluateQuotes(List<Quote> quotesGiven,boolean satisfied)
+    public boolean evaluateQuotes(List<Quote> quotesGiven)
     {
         //in our actual system, this would be where i/o happens, but
-        //we were told not to care about that, so yeah
-        if(satisfied)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        //we were told not to care about that, so yeah.
+        //in actual tests, we will just simulate the interaction without this function
+        //but in the real system, IO would be called here
+        return true;
     }
 
     public void returnBikeToOriginalProvider(int orderCode)
@@ -75,6 +85,7 @@ public class customer
         bikeSystem.recordBikeReturnToPartnerProvider(orderCode,partnerId);
     }
 
+    
 }
 
 

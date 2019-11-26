@@ -3,81 +3,176 @@ package uk.ac.ed.bikerental;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.ArrayList;
+import java.util.List;
 
 import uk.ac.ed.bikerental.Utils.EBikeType;
 import uk.ac.ed.bikerental.Utils.EBookingStatus;
-import uk.ac.ed.bikerental.Utils.QuoteInformation;
 
 public class BikeProvider {
 
-	private LinkedList<Booking> allBookings;
+	private List<Booking> allBookings;
 	private int providerID;
 	private Location location;
-	private LinkedList<Bike> bikes;
-	private LinkedList<BikeProvider> partners;
+	private List<Bike> bikes;
+	private List<BikeProvider> partners;
 	private float depositRate;
 	private String phoneNumber;
 	private String openingTimes;
 	private PricingPolicy pPolicy;
 	private ValuationPolicy vPolicy;
 	
-	public BikeProvider(int pID, Location pLoc, float pRate, String pPhone, String pOpeningTimes) {
-		allBookings = new LinkedList<Booking>();
+
+	///constructors
+	public BikeProvider(int pID, Location pLoc, float pRate, String pPhone, String pOpeningTimes, ValuationPolicy vPol, PricingPolicy pPol) {
+		allBookings = new ArrayList<Booking>();
 		providerID = pID;
 		location = pLoc;
-		bikes = new LinkedList<Bike>();
-		partners = new LinkedList<BikeProvider>();
+		bikes = new ArrayList<Bike>();
+		partners = new ArrayList<BikeProvider>();
 		depositRate = pRate;
 		phoneNumber = pPhone;
 		openingTimes = pOpeningTimes;
-		pPolicy = new StandardPricingPolicy();
-		vPolicy = new StandardValuationPolicy();
+		pPolicy = pPol;
+		vPolicy = vPol;
 	}
 	
+	///getters setters
+	public float getDepositRate()
+	{
+		return depositRate;
+	}
+
+	public String getPhoneNumber()
+	{
+		return phoneNumber;
+	}
+
+	public String openingTimes()
+	{
+		return openingTimes;
+	}
+
+	public List<BikeProvider> getPartners() {
+		return partners;
+	}
+	
+	public Booking getBooking(int orderNo) throws Exception
+	{
+		for(Booking b : allBookings)
+		{
+			if(b.getOrderCode() == orderNo)
+			{
+				return b;
+			}
+		}
+
+		throw new Exception("No booking with that code was found");
+	}
+
+	public List<Bike> getBikesFromBooking(int orderNo) throws Exception
+	{
+
+		Booking b;
+		try{
+			b = getBooking(orderNo);
+		}catch(Exception e){
+			throw new Exception("no such booking");
+		}
+		List<Bike> bikes = new ArrayList<Bike>();
+		for(int bikeCode : b.getBikeCodes())
+		{
+			for(Bike bike : bikes)
+			{
+				if(bike.getCode() == bikeCode)
+				{
+					bikes.add(bike);
+				}
+			}
+		}
+
+		return bikes;
+	}
+
+	public Location getLocation() { return location; }
+	public int getId(){return providerID;}
+
+	///public functionality
 	public boolean canAccomodateRental(DateRange dr, Collection<EBikeType> expectedBikeTypes) {
 		
 		HashMap<EBikeType, Integer> remainingNumOfBikesPerType = new HashMap<EBikeType, Integer>();
-		
-		for (EBikeType type : EBikeType.values()) {
-			remainingNumOfBikesPerType.put(type, 0);
+		int totalBikesNeeded = expectedBikeTypes.size();
+
+		//we count how many of each bike type we need to find
+		for(EBikeType bike : expectedBikeTypes)
+		{
+			if(remainingNumOfBikesPerType.containsKey(bike))
+			{
+				Integer currNumber = remainingNumOfBikesPerType.get(bike);
+				remainingNumOfBikesPerType.put(bike,currNumber+1);
+			}
+			else
+			{
+				remainingNumOfBikesPerType.put(bike,1);
+			}
 		}
 		
-		////WRONG! WE NEED TO CHECK IF THE BIKE IS AVAILABLE IN THE DATE RANGE! HOW? ATTACH COLLECTION OF BOOKINGS TO BIKE OR SMTH?
-		for (Bike b : bikes) {
-			EBikeType type = b.getBikeType().getType();
-			remainingNumOfBikesPerType.put(type, remainingNumOfBikesPerType.get(type) + 1);
+
+		for(Bike b : bikes)
+		{
+			EBikeType currBikeEBikeType = b.getBikeType().getType();
+			Integer currNumber = remainingNumOfBikesPerType.get(currBikeEBikeType);
+			boolean needMoreOfThisType = currNumber > 0;
+	
+			if(needMoreOfThisType && b.isAvailable(dr))
+			{
+				//reduce the needed amount by 1
+				remainingNumOfBikesPerType.put(currBikeEBikeType,currNumber - 1);
+
+				//if we found all the bikes types we need, we can accomodate the rental
+				if(--totalBikesNeeded == 0){return true;}
+
+			}
 		}
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		
-		for (EBikeType type : expectedBikeTypes) {
-			remainingNumOfBikesPerType.put(type, remainingNumOfBikesPerType.get(type) - 1);
-		}
-		
-		assert(false);
+
+		//we haven't found all the required bikes and exhausted the list of bikes
 		return false;
 		
 	}
 	
-	public Quote createQuote(DateRange dr, Collection<EBikeType> pBikes) throws Exception {
+	public Quote createQuote(DateRange dr, Collection<EBikeType> pBikes) {
 		
-		// Do we assume that the booking can be created at this point? Yea right? Assert that here again? 
-		// Like this
+		// yes, we assume that we can accomodate the rental, as the bike system checks that before
 		assert(this.canAccomodateRental(dr, pBikes));
 		
-		LinkedList<Bike> bikesInTheQuote = new LinkedList<Bike>();
+
+		//we are doing this on a first come first served basis, first bikes that appear in the list are preffered over the later ones
+		//if the list is sorted by bike price, then this will yield the cheapest set of bikes (individually and not as a group)
+
+		//so let's choose our finest bikes *dab*
+		ArrayList<Bike> bikesInTheQuote = new ArrayList<Bike>();
 		BigDecimal deposit = new BigDecimal(0);
 		
+		//for each bike type requested
+		outerloop:
 		for (EBikeType type : pBikes) {
+			//go through all bikes
 			for (Bike bike : bikes) {
-				if (bike.isAvailable(dr) && bike.getBikeType().getType() == type && doesNotYetContain(bikesInTheQuote , bike)) {
+				//pick the available ones with the type we need, and which we haven't already picked
+				if (bike.isAvailable(dr) && bike.getBikeType().getType() == type && !bikesInTheQuote.contains(bike)) {
 					bikesInTheQuote.add(bike);
-					deposit = deposit.add(vPolicy.calculateValue(bike, bike.manufactureDate));
+					deposit = deposit.add(vPolicy.calculateValue(bike, bike.getManufactureDate()));
+					
+					//stop when we found enough
+					if(bikesInTheQuote.size() == pBikes.size()){break outerloop;}
 				}
 			}
 		}
+
+		//we better have found enough, this is a double sanity check
+		assert(pBikes.size() == bikesInTheQuote.size());
 		
+		//complete the rest of the quote
 		BigDecimal quotePrice = pPolicy.calculatePrice(bikesInTheQuote, dr);
 		
 		Quote q = new Quote(this, quotePrice, deposit, bikesInTheQuote, dr);
@@ -86,69 +181,103 @@ public class BikeProvider {
 		
 	}
 	
-	private boolean doesNotYetContain(Collection<Bike> bikes, Bike bike) {
-		
-		for (Bike b : bikes) {
-			if (b.getCode() == bike.getCode()) return false;
-		}
-		
-		return true;
-	}
-	
 	public Booking createBooking(Quote q, QuoteInformation qInfo) {
 		
-		LinkedList<Integer> bikeCodes = new LinkedList<Integer>();
+		//just read off the given values to create the booking, then register it onto the system
+		List<Integer> bikeCodes = new ArrayList<Integer>();
 		
 		for (Bike b : q.getBikes()) {
 			bikeCodes.add(b.getCode());
 		}
 		
-		Booking booking = new Booking(q.getDeposit(), q.getPrice(), bikeCodes, q.getDates().getEnd(), this);
+		Booking booking = new Booking(q.getDeposit(), q.getPrice(), bikeCodes, q.getDates(), providerID, qInfo.collectionMode);
 		
+		//we now add the booking to the main list
+		allBookings.add(booking);
+
+		//we also carry the references to the bikes involved in the booking, so they have a reference to it, and can update it on deliveries
+		for(Bike b : q.getBikes())
+		{
+			b.addBooking(booking);
+		}
+
 		return booking;
-		
 	}
 	
 	public void updateBooking(int orderCode, EBookingStatus newStatus) throws Exception{
 		
-		if (!allBookings.contains(orderCode)) {
-			throw new Exception("This provider cannot update a booking it doesn't have.");
-		} else {
-			
 		// To test our code, we might want to assert that every orderCode appears only once in our list. 
-			
-			for (Booking b : allBookings) {											
-				if (b.getOrderCode() == orderCode) {
-					b.setBookingStatus(newStatus);
-					return;
+		
+		for (Booking b : allBookings) {											
+			if (b.getOrderCode() == orderCode) {
+				b.setBookingStatus(newStatus);
+
+				//we retain bookings which are now complete, and whose bikes are returned
+				//however we have to update the bikes which have those bookings, so the state of the system remains valid
+				if(newStatus == EBookingStatus.RETURNED)
+				{
+					for(Bike bike : bikes)
+					{
+						if(bike.containsBooking(b))
+						{
+							bike.removeBooking(b);
+							bike.setInStore(true);
+						}
+					}
 				}
+				return;
 			}
 		}
-		
+
+		//if we haven't found this booking, we cannot update it
+		throw new Exception("This provider cannot update a booking it doesn't have.");
 	}
 	
-	public LinkedList<BikeProvider> getPartners() {
-		return partners;
+	public void addBike(Bike b)
+	{
+		bikes.add(b);
 	}
-	
+
+
 	public EBookingStatus findBookingStatus(int orderCode) throws Exception {
-		if (!allBookings.contains(orderCode)) {
-			throw new Exception("This provider cannot update a booking it doesn't have.");
-		} else {
-			
+
 		// To test our code, we might want to assert that every orderCode appears only once in our list. 
 			
-			for (Booking b : allBookings) {											
-				if (b.getOrderCode() == orderCode) {
-					return b.getStatus();
-				}
+		for (Booking b : allBookings) {											
+			if (b.getOrderCode() == orderCode) {
+				return b.getStatus();
 			}
 		}
-		
-		assert(false);
-		return null; // Our compiler doesn't understand why we don't actually have to add this. It doesn't hurt either.
+	
+		throw new Exception("This provider cannot update a booking it doesn't have.");
+		//ya gotta throw an exception, only then the compiler knows this shouldn't be reached
 	}
 	
-	public Location getLocation() { return location; }
+	boolean containsBooking(Booking b)
+	{
+		return allBookings.contains(b);
+	}
+
+	boolean containsBooking(int orderNo)
+	{
+		for(Booking b : allBookings)
+		{
+			if(b.getOrderCode() == orderNo){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void changePricingPolicy(PricingPolicy newPolicy)
+	{
+		pPolicy = newPolicy;
+	}
+	void changeValuationPolicy(ValuationPolicy newPolicy)
+	{
+		vPolicy = newPolicy;
+	}
 	
+	///private parts
+
 }

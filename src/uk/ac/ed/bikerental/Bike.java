@@ -2,41 +2,46 @@ package uk.ac.ed.bikerental;
 
 import java.time.LocalDate;
 import java.util.LinkedList;
-import java.util.Objects;;
 
 public class Bike implements Deliverable {
-	LinkedList<Booking> bookings;
-    BikeType type;
-    LocalDate manufactureDate;
-    Utils.ECondition condition;
-    boolean Available;
-    int code;
+	private LinkedList<Booking> bookings;
+    private BikeType type;
+    private LocalDate manufactureDate;
+    private Utils.ECondition condition;
+    private boolean available;
+    private int code;
 
+    static int UNIQUE_CODE_COUNTER;
     ///constructors
 
     public Bike(BikeType t, 
                 LocalDate builtOn,
-                Utils.ECondition cond, 
-                int providerHash)
+                Utils.ECondition cond)
     {
         type = t;
         manufactureDate = builtOn;
         condition = cond;
-        Available = true;
-        code = Objects.hash(type,manufactureDate,condition,code);
+        available = true;
+        code = ++UNIQUE_CODE_COUNTER;
         bookings = new LinkedList<Booking>();
     }
 
-    ///getters
+    ///getters setters
+    public LocalDate getManufactureDate() {
+        return manufactureDate;
+    }
+
     public int getCode() {
         return code;
     }
 
-    public boolean isAvailable(DateRange dates)
+    public void setInStore(boolean yesno)
     {
-    	// TODO: Takes a DateRange
-    	assert(false);
-        return Available;
+        available = yesno;
+    }
+    public boolean inStore()
+    {
+        return available;
     }
 
     public Utils.ECondition getCondition() {
@@ -48,15 +53,57 @@ public class Bike implements Deliverable {
     }
 
     ///public functionality
+    public boolean isAvailable(DateRange dates)
+    {
+        //we go through the bookings, and look for overlaps
+        for(Booking b : bookings)
+        {
+            if(b.getDates().overlaps(dates))
+            {
+                //check the booking is non-active
+                if(b.getStatus() == Utils.EBookingStatus.RETURNED)
+                {
+                    removeBooking(b);
+                }
+                else 
+                {
+                    //if we found an overlapping and active booking, we are not available
+                    return false;
+                }
+                
+            }
+        }
+        //we didn't find conflicts
+        return true;
+    }
+
     @Override
     public void onPickup()
     {
-        //TODO IMPLEMENT DELIVERABLE
+        //pickups can never lead to a returned state, so we don't remove bookings here
+
+        //we find the first booking time-wise
+        Booking earliest = earliestBooking();
+        //we progress the earliest booking
+        earliest.progressBooking(true);
+        available = false;
     }
     @Override
     public void onDropoff()
     {
-        //TODO IMPLEMENT DELIVERABLE
+        //dropoffs could lead to a returned state, here we delete the booking from our list 
+        Booking earliest = earliestBooking();
+        earliest.progressBooking(true);
+        if(earliest.getStatus() == Utils.EBookingStatus.RETURNED)
+        {
+            removeBooking(earliest);
+            available = true;
+        }
+        else
+        {
+            return;
+        }
+
     }
     @Override
     public int hashCode() {
@@ -87,8 +134,36 @@ public class Bike implements Deliverable {
     }
     
     public void removeBooking(Booking b) {
-    	// TODO : Write this
+        assert(bookings.contains(b));
+        bookings.remove(b);
+    }
+
+    public boolean containsBooking(Booking b)
+    {
+        return bookings.contains(b);
     }
 
     ///private parts
+
+    //returns the earliest booking
+    private Booking earliestBooking()
+    {
+        Booking earliest = bookings.getFirst();
+        LocalDate earliestDate = LocalDate.of(3000,1,1);
+        for(Booking b : bookings)
+        {
+            if(b == earliest){continue;}
+            //that would lead to an overlapping, we don't allow that
+            assert(b.getDates().getStart().compareTo(earliest.getDates().getStart()) != 0);
+            //we are assuming only active bookings are in the list
+            assert(b.getStatus() != Utils.EBookingStatus.RETURNED);
+
+            if(b.getDates().getStart().compareTo(earliestDate) < 0)
+            {
+                earliestDate = b.getDates().getStart();
+                earliest = b;
+            }
+        }
+        return earliest;
+    }
 }

@@ -30,9 +30,9 @@ public class TestMultiDayRateDiscountPolicy {
 
         LocalDate yearAgo = LocalDate.now().minusYears(1);
 
-        b1 = new Bike(mountain,yearAgo,Utils.ECondition.NEW,0);
-        b2 = new Bike(road,yearAgo,Utils.ECondition.NEW,0);
-        b3 = new Bike(electric,yearAgo,Utils.ECondition.NEW,0);
+        b1 = new Bike(mountain,yearAgo,Utils.ECondition.NEW);
+        b2 = new Bike(road,yearAgo,Utils.ECondition.NEW);
+        b3 = new Bike(electric,yearAgo,Utils.ECondition.NEW);
 
         bikes = Arrays.asList(b1,b2,b3);
 
