@@ -40,19 +40,26 @@ public class MultidayRateDiscountPolicy implements PricingPolicy {
 		
 		BigDecimal price = new BigDecimal(0);
 
+		//we sum the daily price of each bike
 		for (Bike b : bikes) {
 			assert(prices.containsKey(b.getBikeType().getType()));
 			
 			price = price.add(prices.get(b.getBikeType().getType()));		
 		}
 		
+		
+		//calculate number of days in the booking (inclusive on both ends)
 		int daysInt = computeNumDays(duration);
 		BigDecimal numDays = new BigDecimal(daysInt);
 
+		//multiply by the number of days
 		price = price.multiply(numDays);
 
-		assert(numDays.compareTo(BigDecimal.ZERO) >= 0);                                                    // It would be very surprising if this test failed. But better safe than sorry. 
+
+		// It would be very surprising if this test failed. But better safe than sorry. 
+		assert(daysInt >= 0);       
 		
+		//we now find the fractional discount value 
 		BigDecimal multiplicand;
 		if (daysInt <= maxDaysNoDiscount) {
 			multiplicand = new BigDecimal(1);
@@ -64,10 +71,15 @@ public class MultidayRateDiscountPolicy implements PricingPolicy {
 			multiplicand = new BigDecimal(1.0d - ((double) maxDiscountPercentage) / 100.0d);
 		}
 		
+		//multiply by the discount value
 		price = price.multiply(multiplicand);
-		price = price.setScale(2,RoundingMode.HALF_UP);
+
+		//round the value two 2 decimal digits, since this is a currency.
+		price = price.setScale(2,RoundingMode.HALF_EVEN);
 		
+		//the price must be positive
 		assert(price.compareTo(new BigDecimal(0)) >= 0);
+
 		return price;
 	}
 
