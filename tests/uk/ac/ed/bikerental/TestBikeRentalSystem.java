@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedList;
 
+import org.junit.Test;
 import org.junit.jupiter.api.*;
 
 import uk.ac.ed.bikerental.Utils.EBikeType;
@@ -37,7 +38,7 @@ public class TestBikeRentalSystem
 			brs.registerBikeType(hybrid, hybridRepValue);
 		} catch(Exception e)
 		{
-			assertTrue(false,"exception when registering bike type");
+			assertTrue(false,"exception when registering first bike type");
 		}
 
     	assertTrue(brs.getEBikeTypes().contains(hybrid),"Bike type did not get added successfully");
@@ -56,7 +57,7 @@ public class TestBikeRentalSystem
 		brs.registerBikeType(mountain, mountainRepValue);
 		} catch(Exception e)
 		{
-			assertTrue(false,"exception when registering bike type");
+			assertTrue(false,"exception when registering second bike type");
 		}
     	assertTrue(brs.getEBikeTypes().contains(hybrid),"HYBRID is not in the List at this point" );
     	assertTrue(brs.getEBikeTypes().contains(mountain),"MOUNTAIN has not been added" );
@@ -72,15 +73,22 @@ public class TestBikeRentalSystem
     	LocalDate madeOn = LocalDate.ofEpochDay(0); // This is a 50 year old bike, but the condition is alright
     	BikeProvider bpr = new BikeProvider(brs,new Location("aaaaaa","aaaaaa"),new StandardValuationPolicy(1),new StandardPricingPolicy());
 		
-		// This first call should return an exception because we haven't registered the bike type. 
+		// This first call should return an exception because we haven't registered the bike type or provider. 
     	assertThrows(Exception.class, () -> {
     		brs.registerBike(hybridType, cond, madeOn,1);
     	});
     	
-		// This test is only valid if registerBikeType is working, sadly. 
+		// This test is only valid if registerBikeType and registerBikeProvider are working, sadly. 
 		try{
+			Location loc = new Location("EH37QZ" , "42 Cool Town Road");
+	    	StandardValuationPolicy vp = new StandardValuationPolicy((float) 0.3);
+	    	StandardPricingPolicy pp = new StandardPricingPolicy();
+	    	brs.registerProvider(loc, vp, pp);
+	    	
     		brs.registerBikeType(hybrid, hybridRepValue);
+    		
     		brs.registerBike(hybridType, cond, madeOn,0);
+    		
     		assertTrue(bpr.getBikeWithCode(1).getBikeType().getType() == hybrid,"The type of the bike has changed" );
     		assertTrue(bpr.getBikeWithCode(1).getBikeType().getReplacementValue().equals(hybridRepValue),"The replacement value is different" );
 			assertTrue(bpr.getBikeWithCode(1).getCondition() == cond,"The condition of the bike has changed" );
@@ -93,7 +101,7 @@ public class TestBikeRentalSystem
     @Test
     void testRegisterProvider() {
     	Location loc = new Location("EH37QZ" , "42 Cool Town Road");
-    	StandardValuationPolicy vp = new StandardValuationPolicy((float) 0.3);
+    	StandardValuationPolicy vp = new StandardValuationPolicy();
     	StandardPricingPolicy pp = new StandardPricingPolicy();
     	brs.registerProvider(loc, vp, pp);
     	
