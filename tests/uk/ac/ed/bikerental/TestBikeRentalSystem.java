@@ -16,7 +16,7 @@ public class TestBikeRentalSystem
   
 	private BikeRentalSystem brs;
 	
-    @BeforeAll
+    @BeforeEach
     void setUp()
     {
     	DeliveryServiceFactory.setupMockDeliveryService();
@@ -70,7 +70,7 @@ public class TestBikeRentalSystem
     	BikeType hybridType = new BikeType(hybrid, hybridRepValue);
     	ECondition cond = ECondition.AVERAGE;
     	LocalDate madeOn = LocalDate.ofEpochDay(0); // This is a 50 year old bike, but the condition is alright
-    	BikeProvider bpr = new BikeProvider(brs,new Location(" "," "),new StandardValuationPolicy(1),new StandardPricingPolicy());
+    	BikeProvider bpr = new BikeProvider(brs,new Location("aaaaaa","aaaaaa"),new StandardValuationPolicy(1),new StandardPricingPolicy());
 		
 		// This first call should return an exception because we haven't registered the bike type. 
     	assertThrows(Exception.class, () -> {

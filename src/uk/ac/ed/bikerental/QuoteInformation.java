@@ -13,7 +13,7 @@ public class QuoteInformation
         name = " ";
         surname = " ";
         phone = " ";
-        address = new Location(" "," ");
+        address = new Location("aaaaaa","aaaaaa");
         collectionMode = ECollectionMode.DELIVERY;
     }
     public QuoteInformation(Customer c, ECollectionMode pCollectionMode) {
