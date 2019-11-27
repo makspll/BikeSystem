@@ -1,3 +1,4 @@
+
 package uk.ac.ed.bikerental;
 
 import static org.junit.Assert.assertEquals;
@@ -348,3 +349,4 @@ public class TestBookingAQuote {
 	}
 	
 }
+

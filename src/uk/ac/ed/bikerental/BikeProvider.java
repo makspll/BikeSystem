@@ -36,7 +36,11 @@ public class BikeProvider {
 	
 	///getters setters
 
-
+	public static int getIDCounter()
+	{
+		return UNIQUE_CODE_COUNT;
+	}
+	
 	public List<BikeProvider> getPartners() {
 		return partners;
 	}
