@@ -16,8 +16,12 @@ public class Customer
     
     
     ///constructors
-    public Customer(BikeRentalSystem brs, String name, String surname, String phone, String location) {
+    public Customer(BikeRentalSystem brs, String pName, String pSurname, String pPhone, Location pLocation) {
     	bikeSystem = brs;
+    	name = pName;
+    	surname = pSurname;
+    	phone = pPhone;
+    	location = pLocation;
     }
 
     ///getters
