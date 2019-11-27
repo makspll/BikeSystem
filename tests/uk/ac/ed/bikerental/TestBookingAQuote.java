@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedList;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,13 +30,11 @@ public class TestBookingAQuote {
 	 * if the invoice for the quote is passed to the customer accordingly
 	 * and if the requested bikes are available iff we would expect them to. 
 	 */
-	
-	
+  
 	@BeforeEach
 	void setUp() {
-		DeliveryServiceFactory dsf = new DeliveryServiceFactory();
-		dsf.setupMockDeliveryService();
-		DeliveryService ds = dsf.getDeliveryService();
+		DeliveryServiceFactory.setupMockDeliveryService();
+		DeliveryService ds = DeliveryServiceFactory.getDeliveryService();
 		brs = new BikeRentalSystem(ds, LocalDate.now());
 		
 		Location cLoc = new Location("EH12FJ", "79 Street Street");
@@ -42,7 +42,7 @@ public class TestBookingAQuote {
 		
 		Location loc = new Location("EH89QX", "5 Main Street");
 		StandardPricingPolicy spp = new StandardPricingPolicy();
-		StandardValuationPolicy svp = new StandardValuationPolicy();
+		StandardValuationPolicy svp = new StandardValuationPolicy(1f);
 		brs.registerProvider(loc, svp, spp);
 		
 		Location loc2 = new Location("EH89BL", "12 Side Street");
@@ -215,7 +215,7 @@ public class TestBookingAQuote {
 		LocalDate today = LocalDate.now();
 		LocalDate soon = LocalDate.now().plusDays(3);
 		DateRange dr = new DateRange(today, soon);
-		
+
 		Quote q1 = null;
 		try {
 			q1 = new Quote(brs.getProviderWithID(1) , price, deposit, oneBike, dr);

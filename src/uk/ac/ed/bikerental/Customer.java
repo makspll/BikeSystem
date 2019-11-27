@@ -51,16 +51,17 @@ public class Customer
     
     public List<Quote> findQuotes(DateRange dates,
                                     List<EBikeType> bikes,
-                                    Location location)
+                                    Location location) throws Exception
     {
         List<Quote> quotesAvailable;
         try{
             quotesAvailable = bikeSystem.getQuotes(dates,bikes,location);
         }catch(Exception e)
         {
-            quotesAvailable = null;
+            throw new Exception("bike system threw an exception when looking for quotes");
         }
-        if(quotesAvailable != null && quotesAvailable.size() > 0)      // if we find some quotes
+
+        if(quotesAvailable.size() > 0)      // if we find some quotes
         {
             return quotesAvailable;
         }
