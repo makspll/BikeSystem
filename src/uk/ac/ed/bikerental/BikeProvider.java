@@ -233,7 +233,11 @@ public class BikeProvider {
 		bikes.add(b);
 	}
 
-
+	public List<Bike> getBikes()
+	{
+		return bikes;
+	}
+	
 	public EBookingStatus findBookingStatus(int orderCode) throws Exception {
 
 		// To test our code, we might want to assert that every orderCode appears only once in our list. 

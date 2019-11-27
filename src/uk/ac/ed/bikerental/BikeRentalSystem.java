@@ -58,7 +58,7 @@ public class BikeRentalSystem {
 		throw new Exception("Type has not been registered yet!");
 	}
 
-	public void registerBike(BikeType bt, ECondition cond, LocalDate madeOn, int providerID) throws Exception
+	public int registerBike(BikeType bt, ECondition cond, LocalDate madeOn, int providerID) throws Exception
 	{
 		if (!bikeTypes.contains(bt)) {
 			throw new Exception("Cannot add a bike of an unregistered type.");
@@ -71,6 +71,7 @@ public class BikeRentalSystem {
 		
 		Bike newBike = new Bike(bt,madeOn,cond);
 		getProviderWithID(providerID).addBike(newBike);
+		return newBike.getCode();
 	}
 	
 	public BikeProvider getProviderWithID(int id) throws Exception {
@@ -80,15 +81,16 @@ public class BikeRentalSystem {
 		throw new Exception("Provider with this ID has not been found");
 	}
 
-	public void registerProvider(Location loc, ValuationPolicy vp, PricingPolicy pp)
+	public int registerProvider(Location loc, ValuationPolicy vp, PricingPolicy pp)
 	{
 		BikeProvider bp = new BikeProvider(this,loc,vp,pp);
 		bikeProviders.add(bp);
+		return bp.getId();
 	}
 	
 	public LinkedList<Quote> getQuotes(DateRange dates, Collection<EBikeType> bikes, Location loc) throws Exception  {
 		
-		if (bikes.isEmpty()) throw new Exception("You cannot request quotes for an empty collection of bikes.");
+		if (bikes.isEmpty()){throw new Exception("You cannot request quotes for an empty collection of bikes.");}
 		
 		LinkedList<Quote> quotes = new LinkedList<Quote>();
 		
