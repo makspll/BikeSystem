@@ -74,16 +74,16 @@ public class TestBikeRentalSystem
 		
 		// This first call should return an exception because we haven't registered the bike type. 
     	assertThrows(Exception.class, () -> {
-    		brs.registerBike(hybridType, cond, madeOn,0);
+    		brs.registerBike(hybridType, cond, madeOn,1);
     	});
     	
 		// This test is only valid if registerBikeType is working, sadly. 
 		try{
     		brs.registerBikeType(hybrid, hybridRepValue);
     		brs.registerBike(hybridType, cond, madeOn,0);
-    		assertTrue(bpr.getBikeWithCode(0).getBikeType().getType() == hybrid,"The type of the bike has changed" );
-    		assertTrue(bpr.getBikeWithCode(0).getBikeType().getReplacementValue().equals(hybridRepValue),"The replacement value is different" );
-			assertTrue(bpr.getBikeWithCode(0).getCondition() == cond,"The condition of the bike has changed" );
+    		assertTrue(bpr.getBikeWithCode(1).getBikeType().getType() == hybrid,"The type of the bike has changed" );
+    		assertTrue(bpr.getBikeWithCode(1).getBikeType().getReplacementValue().equals(hybridRepValue),"The replacement value is different" );
+			assertTrue(bpr.getBikeWithCode(1).getCondition() == cond,"The condition of the bike has changed" );
 		}catch(Exception e)
 		{
 			assertTrue(false,"exception when registering bike");
