@@ -15,7 +15,7 @@ public class Quote {
 		provider = pProvider;
 		price = pPrice;
 		deposit = pDeposit;
-		bikes = (ArrayList<Bike>) pBikes;
+		bikes = new ArrayList<Bike>(pBikes);
 		dates = pDates;
 	}
 	

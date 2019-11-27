@@ -43,7 +43,10 @@ public class Booking {
 	}	
 	
 
-	
+	public static int getIDCounter()
+	{
+		return UNIQUE_CODE_COUNT;
+	}
 	public void progressBooking(boolean progressedByDeliveryService) {
 		//FSM for the bookings, it can always go 2 ways (when active), except when it's in delivery, then there's only one way
 		switch (status) {
