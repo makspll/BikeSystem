@@ -3,20 +3,51 @@ package uk.ac.ed.bikerental;
 import java.util.List;
 import java.util.ArrayList;
 import uk.ac.ed.bikerental.Utils.EBikeType;
+import uk.ac.ed.bikerental.Utils.ECollectionMode;
 import uk.ac.ed.bikerental.BikeRentalSystem;
 
 public class Customer
 {
     private List<Invoice> currentInvoices;
     public BikeRentalSystem bikeSystem;
-    ///constructors
     
+    private String name, surname, phone;
+    private Location location;
+    
+    
+    ///constructors
+    public Customer(BikeRentalSystem brs, String pName, String pSurname, String pPhone, Location pLocation) {
+    	bikeSystem = brs;
+    	name = pName;
+    	surname = pSurname;
+    	phone = pPhone;
+    	location = pLocation;
+    }
 
     ///getters
+    public List<Invoice> getCurrentInvoices() {
+    	return currentInvoices;
+    }
+    public Location getLocation() {return location;}
+    public String getPhone() {return phone;}
+    public String getName() {return name;}
+    public String getSurname() {return surname;}
      
+    ///setters
+    public void setLocation(Location l) {location = l;}
+    public void setPhone(String s) {phone = s;}
+    public void setName(String s) {name = s;}
+    public void setSurname(String s) {surname = s;}
 
     ///private parts
 
+    public void removeInvoice (Invoice inv) {
+    	for (Invoice i : currentInvoices) {
+    		if (i.getOrderCode() == inv.getOrderCode()) {
+    			currentInvoices.remove(i);
+    		}
+    	}
+    }
     
     public List<Quote> findQuotes(DateRange dates,
                                     List<EBikeType> bikes,
@@ -42,10 +73,11 @@ public class Customer
         }
     }
 
-    public boolean orderQuote(Quote q, QuoteInformation quoteInfo)
+    public boolean orderQuote(Quote q, ECollectionMode collectionMode)
     {
         //withing book quote the system prompts the user to pay
         Invoice invoice;
+        QuoteInformation quoteInfo = new QuoteInformation(this, collectionMode);
         try{
             invoice = bikeSystem.bookQuote(q, quoteInfo);
         }catch(Exception e)
@@ -66,11 +98,10 @@ public class Customer
     }
 
     // tells the system if the user needs a new selection of quotes,
-    //in the actual system the boolean parameter wouldnt be required
     public boolean evaluateQuotes(List<Quote> quotesGiven)
     {
         //in our actual system, this would be where i/o happens, but
-        //we were told not to care about that, so yeah.
+        //we were told not to care about that, so we don't.
         //in actual tests, we will just simulate the interaction without this function
         //but in the real system, IO would be called here
         return true;
@@ -87,5 +118,3 @@ public class Customer
 
     
 }
-
-

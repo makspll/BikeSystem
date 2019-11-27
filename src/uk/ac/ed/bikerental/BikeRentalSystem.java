@@ -19,7 +19,9 @@ public class BikeRentalSystem {
 	private DeliveryService deliveryService;
 	private LocalDate currentDate;
 
-	static int UNIQUE_ID_COUNTER;
+	public List<BikeProvider> getProviders() { return bikeProviders; }
+	public List<BikeType> getBikeTypes() { return bikeTypes; }
+	
 	public BikeRentalSystem(DeliveryService ds, LocalDate dateInitial)
 	{
 		bikeProviders = new ArrayList<BikeProvider>();
@@ -27,6 +29,7 @@ public class BikeRentalSystem {
 		deliveryService = ds;
 		currentDate = dateInitial;
 	}
+	
 	public void registerBikeType(EBikeType Ebt, BigDecimal replacementVal) throws Exception
 	{
 		for(BikeType bt : bikeTypes)
@@ -40,16 +43,39 @@ public class BikeRentalSystem {
 		BikeType newBt = new BikeType(Ebt, replacementVal);
 		bikeTypes.add(newBt);
 	}
-
-	public Bike registerBike(BikeType bt, ECondition cond, LocalDate madeOn)
-	{
-		Bike newBike = new Bike(bt,madeOn,cond);
-		return newBike;
+	
+	public BikeType getType(EBikeType type) throws Exception {
+		for (BikeType bt : bikeTypes) {
+			if (bt.getType() == type) return bt;
+		}
+		throw new Exception("Type has not been registered yet!");
 	}
 
-	public void registerProvider(Location loc, float depositR, String phone, String openingTimes, ValuationPolicy vp, PricingPolicy pp)
+	public void registerBike(BikeType bt, ECondition cond, LocalDate madeOn, int providerID) throws Exception
 	{
-		BikeProvider bp = new BikeProvider(++UNIQUE_ID_COUNTER,loc,depositR,phone,openingTimes,vp,pp);
+		if (!bikeTypes.contains(bt)) {
+			throw new Exception("Cannot add a bike of an unregistered type.");
+		}
+		boolean containsID = false;
+		for (BikeProvider bp : this.bikeProviders) {
+			if (bp.getId() == providerID) containsID = true;
+		}
+		if (!containsID) throw new Exception("The provider ID is not in the system");
+		
+		Bike newBike = new Bike(bt,madeOn,cond);
+		getProviderWithID(providerID).addBike(newBike);
+	}
+	
+	public BikeProvider getProviderWithID(int id) throws Exception {
+		for (BikeProvider bp : bikeProviders) {
+			if (bp.getId() == id) return bp;
+		}
+		throw new Exception("Provider with this ID has not been found");
+	}
+
+	public void registerProvider(Location loc, ValuationPolicy vp, PricingPolicy pp)
+	{
+		BikeProvider bp = new BikeProvider(this,loc,vp,pp);
 		bikeProviders.add(bp);
 	}
 	

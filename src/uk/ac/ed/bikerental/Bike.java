@@ -11,7 +11,7 @@ public class Bike implements Deliverable {
     private boolean available;
     private int code;
 
-    static int UNIQUE_CODE_COUNTER;
+    static int UNIQUE_CODE_COUNTER = 0;
     ///constructors
 
     public Bike(BikeType t, 

@@ -16,42 +16,26 @@ public class BikeProvider {
 	private Location location;
 	private List<Bike> bikes;
 	private List<BikeProvider> partners;
-	private float depositRate;
-	private String phoneNumber;
-	private String openingTimes;
 	private PricingPolicy pPolicy;
 	private ValuationPolicy vPolicy;
+	private BikeRentalSystem system;
 	
+	private static int UNIQUE_CODE_COUNT = 0;
 
 	///constructors
-	public BikeProvider(int pID, Location pLoc, float pRate, String pPhone, String pOpeningTimes, ValuationPolicy vPol, PricingPolicy pPol) {
+	public BikeProvider(BikeRentalSystem brs, Location pLoc, ValuationPolicy vPol, PricingPolicy pPol) {
+		system = brs;
 		allBookings = new ArrayList<Booking>();
-		providerID = pID;
+		providerID = ++UNIQUE_CODE_COUNT;
 		location = pLoc;
 		bikes = new ArrayList<Bike>();
 		partners = new ArrayList<BikeProvider>();
-		depositRate = pRate;
-		phoneNumber = pPhone;
-		openingTimes = pOpeningTimes;
 		pPolicy = pPol;
 		vPolicy = vPol;
 	}
 	
 	///getters setters
-	public float getDepositRate()
-	{
-		return depositRate;
-	}
 
-	public String getPhoneNumber()
-	{
-		return phoneNumber;
-	}
-
-	public String openingTimes()
-	{
-		return openingTimes;
-	}
 
 	public List<BikeProvider> getPartners() {
 		return partners;
@@ -92,6 +76,16 @@ public class BikeProvider {
 		}
 
 		return bikes;
+	}
+	
+	public Bike getBikeWithCode(int code) throws Exception {
+		
+		for (Bike b : this.bikes) {
+			if (b.getCode() == code) return b;
+		}
+		
+		throw new Exception("Bike with ID not found");
+		
 	}
 
 	public Location getLocation() { return location; }
@@ -233,8 +227,8 @@ public class BikeProvider {
 		throw new Exception("This provider cannot update a booking it doesn't have.");
 	}
 	
-	public void addBike(Bike b)
-	{
+	public void addBike(Bike b) throws Exception
+	{	
 		bikes.add(b);
 	}
 
