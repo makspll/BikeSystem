@@ -21,6 +21,7 @@ public class TestBikeProvider
     private DateRange dr1,dr2,dr3;
     private Bike bike1;
     private Collection<EBikeType> bikeOrder1, bikeOrder2;
+    private BikeRentalSystem brs;
     @BeforeEach
     void setUp()
     {
@@ -31,6 +32,8 @@ public class TestBikeProvider
         //overlaps booked 
         dr3 = new DateRange(LocalDate.of(2019,1,6), LocalDate.of(2019,1,9));
 
+        DeliveryServiceFactory.setupMockDeliveryService();
+        brs = new BikeRentalSystem(DeliveryServiceFactory.getDeliveryService(), LocalDate.of(2019,1,1));
 
         float drate = 0.5f;
         ValuationPolicy vPol = new StandardValuationPolicy(drate);
@@ -49,7 +52,7 @@ public class TestBikeProvider
         bikeOrder2.add(EBikeType.MOUNTAIN);
 
         bike1 = new Bike(bt1,LocalDate.of(2016,2,5),ECondition.NEW);
-        bpr = new BikeProvider(0,new Location("EH11 8SY","69 Street"),drate,"123","24/7",vPol,pPol);
+        bpr = new BikeProvider(brs,new Location("EH11 8SY","69 Street"),vPol,pPol);
         bpr.addBike(bike1);
     }
 
@@ -78,8 +81,6 @@ public class TestBikeProvider
         //set up
         Quote outQuote = bpr.createQuote(dr1, bikeOrder1);
         QuoteInformation qInfo = new QuoteInformation();
-        qInfo.collectionMode = ECollectionMode.DELIVERY;
-        qInfo.address = new Location("EH12 59T","canine lovers 4/1");
         bpr.createBooking(outQuote, qInfo);
         //test
 

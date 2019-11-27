@@ -227,7 +227,8 @@ public class BikeProvider {
 		throw new Exception("This provider cannot update a booking it doesn't have.");
 	}
 	
-	public void addBike(Bike b) throws Exception
+	//the bike must be registered with the system first
+	public void addBike(Bike b)
 	{	
 		bikes.add(b);
 	}

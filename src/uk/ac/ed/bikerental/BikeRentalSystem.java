@@ -20,7 +20,14 @@ public class BikeRentalSystem {
 	private LocalDate currentDate;
 
 	public List<BikeProvider> getProviders() { return bikeProviders; }
-	public List<BikeType> getBikeTypes() { return bikeTypes; }
+	public List<EBikeType> getEBikeTypes() {
+		List<EBikeType> eTypes = new ArrayList<EBikeType>();
+		for(BikeType b : bikeTypes)
+		{
+			eTypes.add(b.getType());
+		}
+		return eTypes; 
+		}
 	
 	public BikeRentalSystem(DeliveryService ds, LocalDate dateInitial)
 	{

@@ -8,6 +8,14 @@ public class QuoteInformation
     public Location address;
     public ECollectionMode collectionMode;
     
+    public QuoteInformation()
+    {
+        name = " ";
+        surname = " ";
+        phone = " ";
+        address = new Location(" "," ");
+        collectionMode = ECollectionMode.DELIVERY;
+    }
     public QuoteInformation(Customer c, ECollectionMode pCollectionMode) {
     	name = c.getName();
     	surname = c.getSurname();
