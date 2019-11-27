@@ -9,7 +9,6 @@ import java.util.LinkedList;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 
 import uk.ac.ed.bikerental.Utils.EBikeType;

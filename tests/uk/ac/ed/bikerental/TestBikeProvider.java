@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.util.Collection;
 import java.util.ArrayList;
 import uk.ac.ed.bikerental.Utils.EBikeType;
@@ -54,6 +53,19 @@ public class TestBikeProvider
         bike1 = new Bike(bt1,LocalDate.of(2016,2,5),ECondition.NEW);
         bpr = new BikeProvider(brs,new Location("EH11 8SY","69 Street"),vPol,pPol);
         bpr.addBike(bike1);
+    }
+
+    @Test
+    void testIDs()
+    {
+        //reset the static id counter
+        int lastTakenID = BikeProvider.getIDCounter();
+        BikeRentalSystem brs = null;
+        BikeProvider bp1 = new BikeProvider(brs,new Location("asdasds","asdasd"),new StandardValuationPolicy(1f), new StandardPricingPolicy());
+        assertEquals(lastTakenID+1,bp1.getId(),"first provider was set ID: " + bp1.getId());
+
+        BikeProvider bp2 = new BikeProvider(brs,new Location("asdasds","asdasd"),new StandardValuationPolicy(1f), new StandardPricingPolicy());
+        assertEquals(lastTakenID+2,bp2.getId(),"second provider was set ID: "+ bp2.getId());
     }
 
     @Test

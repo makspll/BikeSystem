@@ -27,6 +27,10 @@ public class Bike implements Deliverable {
     }
 
     ///getters setters
+    public static int getIDCounter()
+    {
+        return UNIQUE_CODE_COUNTER;
+    }
     public LocalDate getManufactureDate() {
         return manufactureDate;
     }

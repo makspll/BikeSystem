@@ -37,7 +37,7 @@ public class BikeRentalSystem {
 		currentDate = dateInitial;
 	}
 	
-	public void registerBikeType(EBikeType Ebt, BigDecimal replacementVal) throws Exception
+	public BikeType registerBikeType(EBikeType Ebt, BigDecimal replacementVal) throws Exception
 	{
 		for(BikeType bt : bikeTypes)
 		{
@@ -49,6 +49,7 @@ public class BikeRentalSystem {
 
 		BikeType newBt = new BikeType(Ebt, replacementVal);
 		bikeTypes.add(newBt);
+		return newBt;
 	}
 	
 	public BikeType getType(EBikeType type) throws Exception {
