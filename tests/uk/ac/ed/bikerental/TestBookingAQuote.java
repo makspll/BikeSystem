@@ -1,13 +1,12 @@
 package uk.ac.ed.bikerental;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedList;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,11 +29,13 @@ public class TestBookingAQuote {
 	 * if the invoice for the quote is passed to the customer accordingly
 	 * and if the requested bikes are available iff we would expect them to. 
 	 */
-  
+	
+	
 	@BeforeEach
 	void setUp() {
-		DeliveryServiceFactory.setupMockDeliveryService();
-		DeliveryService ds = DeliveryServiceFactory.getDeliveryService();
+		DeliveryServiceFactory dsf = new DeliveryServiceFactory();
+		dsf.setupMockDeliveryService();
+		DeliveryService ds = dsf.getDeliveryService();
 		brs = new BikeRentalSystem(ds, LocalDate.now());
 		
 		Location cLoc = new Location("EH12FJ", "79 Street Street");
@@ -42,7 +43,7 @@ public class TestBookingAQuote {
 		
 		Location loc = new Location("EH89QX", "5 Main Street");
 		StandardPricingPolicy spp = new StandardPricingPolicy();
-		StandardValuationPolicy svp = new StandardValuationPolicy(1f);
+		StandardValuationPolicy svp = new StandardValuationPolicy();
 		brs.registerProvider(loc, svp, spp);
 		
 		Location loc2 = new Location("EH89BL", "12 Side Street");
@@ -51,7 +52,6 @@ public class TestBookingAQuote {
 		try {
 			brs.registerBikeType(EBikeType.MOUNTAIN, new BigDecimal(500));
 			brs.registerBikeType(EBikeType.HYBRID, new BigDecimal(700));
-			brs.registerBikeType(EBikeType.ROAD, new BigDecimal(300));
 		} catch (Exception e) {
 			assertTrue(false, "Exception occurred when registering bike type");
 		}
@@ -61,7 +61,7 @@ public class TestBookingAQuote {
 			brs.registerBike(brs.getType(EBikeType.MOUNTAIN), ECondition.BAD, LocalDate.now().minusYears(5), 1);
 			brs.registerBike(brs.getType(EBikeType.HYBRID), ECondition.GOOD, LocalDate.now().minusYears(1), 1);
 			brs.registerBike(brs.getType(EBikeType.HYBRID), ECondition.NEW, LocalDate.now().minusDays(1), 2);
-			brs.registerBike(brs.getType(EBikeType.ROAD), ECondition.NEW, LocalDate.now().minusDays(1), 2);
+			brs.registerBike(brs.getType(EBikeType.HYBRID), ECondition.NEW, LocalDate.now().minusDays(1), 2);
 		} catch (Exception e) {
 			assertTrue(false, "Exception occurred when registering bikes");
 		}
@@ -94,7 +94,7 @@ public class TestBookingAQuote {
 		
 		boolean success = c.orderQuote(q, ECollectionMode.PICKUP);
 		
-		assertTrue(success);
+		assertTrue(success , "The booking was not successful");
 	}
 	
 	@Test
@@ -158,7 +158,8 @@ public class TestBookingAQuote {
 		assertEquals(1 , c.getCurrentInvoices().get(0).getOrderCode());
 	}
 	
-	// Here, we have two quotes involving the same bike
+	// Here, we have two quotes involving the same bike. The quote should go through 
+	// since the 1st provider has 2 equivalent bikes of the same type / age / condition.
 	@Test
 	void testTwoEquivalentOrdersGoThrough() {
 		LinkedList<Bike> oneBike = new LinkedList<Bike>();
@@ -207,7 +208,6 @@ public class TestBookingAQuote {
 		} catch (Exception e) {
 			assertTrue(false, "Exception occurred when adding bike to collection");
 		}
-		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.MIN));
 		
 		BigDecimal price = new BigDecimal(30);
 		BigDecimal deposit = new BigDecimal(100);
@@ -215,7 +215,7 @@ public class TestBookingAQuote {
 		LocalDate today = LocalDate.now();
 		LocalDate soon = LocalDate.now().plusDays(3);
 		DateRange dr = new DateRange(today, soon);
-
+		
 		Quote q1 = null;
 		try {
 			q1 = new Quote(brs.getProviderWithID(1) , price, deposit, oneBike, dr);
@@ -254,6 +254,97 @@ public class TestBookingAQuote {
 		} catch (Exception e) {
 			assertTrue(false, "Exception occurred when getting provider or booking");
 		}		
+	}
+	
+	@Test
+	void testOrderFailsIfBikeTypeIsNotAvailable() {
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(1).getBikeWithCode(1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		BigDecimal price = new BigDecimal(30);
+		BigDecimal deposit = new BigDecimal(100);
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		Quote q = null;
+		try {
+			q = new Quote(brs.getProviderWithID(2) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		
+		boolean success = c.orderQuote(q, ECollectionMode.PICKUP);
+		assertFalse(success , "The order goes through even though the 2nd provider doesn't offer mountain bikes");
+	}
+	
+	@Test
+	void testOrderFailsIfNotEnoughBikesCanBeProvided() {
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(2).getBikeWithCode(4));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		
+		LinkedList<Bike> otherBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(2).getBikeWithCode(5));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		
+		BigDecimal price = new BigDecimal(30);
+		BigDecimal deposit = new BigDecimal(100);
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		Quote q1 = null;
+		try {
+			q1 = new Quote(brs.getProviderWithID(1) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+
+		boolean success1 = c.orderQuote(q1, ECollectionMode.PICKUP);
+		
+		assertTrue(success1, "The first quote could not be ordered");
+		
+		Quote q2 = null;
+		try {
+			q2 = new Quote(brs.getProviderWithID(1) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		
+		try {
+			assertEquals(EBookingStatus.BOOKED , brs.getProviderWithID(1).getBooking(1).getStatus());
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
+		}	// Checks if 1st Booking is booked
+		try {
+			assertTrue(brs.getProviderWithID(1).getBooking(1).getDates().getStart().equals(today) , "The bookings got mixed up, or the information for booking 1 got altered");
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
+		}
+		try {
+			assertEquals(EBookingStatus.BOOKED , brs.getProviderWithID(1).getBooking(2).getStatus());
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
+		}	// Checks if 2nd Booking is booked
+		try {
+			assertTrue(brs.getProviderWithID(1).getBooking(2).getDates().getStart().equals(today) , "The bookings got mixed up, or the information for booking 1 got altered");
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
+		}
 	}
 	
 }
