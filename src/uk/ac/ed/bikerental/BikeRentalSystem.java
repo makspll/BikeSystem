@@ -105,7 +105,7 @@ public class BikeRentalSystem {
 
 		BikeProvider responsibleProvider = q.getProvider();
 
-		//check we can still accomodate the quote, and if the state has changed since acquiring the quote (e.g. the prices)
+		//check if we can still accommodate the quote, and if the state has changed since acquiring the quote (e.g. the prices)
 		ArrayList<EBikeType> bikeTypes = new ArrayList<EBikeType>();
 		Quote otherQuote;
 		for(Bike b : q.getBikes())
@@ -118,9 +118,9 @@ public class BikeRentalSystem {
 			otherQuote = responsibleProvider.createQuote(q.getDates(), bikeTypes);
 			if(q.getPrice() != otherQuote.getPrice() || q.getDeposit() != otherQuote.getDeposit())
 			{
-				throw new Exception("State has changed, quote cannot be accomodated anymore, or at the same price.");
+				throw new Exception("State has changed, quote cannot be accomodated at the same price anymore.");
 			}
-		}
+		} else throw new Exception("State has changed, quote cannot be accomodated anymore.");
 		
 
 		Booking createdBooking = responsibleProvider.createBooking(q, quoteInfo);
