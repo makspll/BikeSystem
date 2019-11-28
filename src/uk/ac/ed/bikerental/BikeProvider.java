@@ -42,6 +42,10 @@ public class BikeProvider {
 	
 	///getters setters
 
+	public void addPartner(BikeProvider partner)
+	{
+		partners.add(partner);
+	}
 	public static int getIDCounter()
 	{
 		return UNIQUE_CODE_COUNT;
@@ -82,6 +86,7 @@ public class BikeProvider {
 			throw new Exception("no such booking");
 		}
 		List<Bike> bikes = new ArrayList<Bike>();
+		assert(b.getBikeCodes().size() > 0);
 		for(int bikeCode : b.getBikeCodes())
 		{
 			for(Bike bike : bikes)
@@ -168,17 +173,26 @@ public class BikeProvider {
 		//for each bike type requested
 		outerloop:
 		for (EBikeType type : pBikes) {
+			//test if for some type we can't supply
+			boolean haveThisType = false;
 			//go through all bikes
 			for (Bike bike : bikes) {
+				if(bike.getBikeType().getType().equals(type))
+				{
+					haveThisType = true;
+				}
 				//pick the available ones with the type we need, and which we haven't already picked
-				if (bike.isAvailable(dr) && bike.getBikeType().getType() == type && !bikesInTheQuote.contains(bike)) {
+				if (bike.isAvailable(dr) && bike.getBikeType().getType().equals(type) && !bikesInTheQuote.contains(bike)) {
 					bikesInTheQuote.add(bike);
 					deposit = deposit.add(vPolicy.calculateValue(bike, bike.getManufactureDate()));
-					
+	
 					//stop when we found enough
 					if(bikesInTheQuote.size() == pBikes.size()){break outerloop;}
+					//also stop looking for bikes for each type when we found one already
+					break;
 				}
 			}
+			assertTrue(haveThisType,"error in creating quote, we were supposed to have this type of bike");
 		}
 
 		//we better have found enough, this is a double sanity check

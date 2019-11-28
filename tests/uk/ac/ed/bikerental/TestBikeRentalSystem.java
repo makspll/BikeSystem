@@ -23,10 +23,7 @@ public class TestBikeRentalSystem
     	DeliveryServiceFactory.setupMockDeliveryService();
     	LocalDate date = LocalDate.now();
     	
-        brs = new BikeRentalSystem(
-        		DeliveryServiceFactory.getDeliveryService(),
-        		date
-        );
+        brs = new BikeRentalSystem(date);
         
     }
     

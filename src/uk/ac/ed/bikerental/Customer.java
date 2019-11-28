@@ -111,13 +111,23 @@ public class Customer
         return true;
     }
 
-    public void returnBikeToOriginalProvider(int orderCode)
+    public void returnBikeToOriginalProvider(int orderCode) throws Exception
     {
-        bikeSystem.recordReturnToOriginalProvider(orderCode);
+        try{
+            bikeSystem.recordReturnToOriginalProvider(orderCode);
+        }catch (Exception e)
+        {
+            throw new Exception(e);
+        }
     }
-    public void returnBikeToPartnerProvider(int orderCode, int partnerId)
+    public void returnBikeToPartnerProvider(int orderCode, int partnerId) throws Exception
     {
-        bikeSystem.recordBikeReturnToPartnerProvider(orderCode,partnerId);
+        try{
+            bikeSystem.recordBikeReturnToPartnerProvider(orderCode,partnerId);
+        }catch (Exception e)
+        {
+           throw new Exception(e);
+        }
     }
 
     

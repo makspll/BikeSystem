@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.Collection;
+import java.util.List;
 import java.util.ArrayList;
 import uk.ac.ed.bikerental.Utils.EBikeType;
 import uk.ac.ed.bikerental.Utils.EBookingStatus;
@@ -18,9 +19,10 @@ public class TestBikeProvider
 {
     private BikeProvider bpr;
     private DateRange dr1,dr2,dr3;
-    private Bike bike1;
-    private Collection<EBikeType> bikeOrder1, bikeOrder2;
+    private Bike bike1,bike2;
+    private Collection<EBikeType> bikeOrder1, bikeOrder2,bikeOrder3;
     private BikeRentalSystem brs;
+    private PricingPolicy pPol;
     @BeforeEach
     void setUp()
     {
@@ -32,15 +34,17 @@ public class TestBikeProvider
         dr3 = new DateRange(LocalDate.of(2019,1,6), LocalDate.of(2019,1,9));
 
         DeliveryServiceFactory.setupMockDeliveryService();
-        brs = new BikeRentalSystem(DeliveryServiceFactory.getDeliveryService(), LocalDate.of(2019,1,1));
+        brs = new BikeRentalSystem(LocalDate.of(2019,1,1));
 
         float drate = 0.5f;
         ValuationPolicy vPol = new StandardValuationPolicy(drate);
-        PricingPolicy pPol = new StandardPricingPolicy();
+        pPol = new StandardPricingPolicy();
 
         BikeType bt1 = new BikeType(EBikeType.MOUNTAIN,new BigDecimal(100)); 
         pPol.setDailyRentalPrice(bt1,new BigDecimal(10));
 
+        BikeType bt2 = new BikeType(EBikeType.HYBRID, new BigDecimal(100));
+        pPol.setDailyRentalPrice(bt2, new BigDecimal(10));
         //1 bike
         bikeOrder1 = new ArrayList<EBikeType>();
         bikeOrder1.add(EBikeType.MOUNTAIN);
@@ -50,9 +54,16 @@ public class TestBikeProvider
         bikeOrder2.add(EBikeType.MOUNTAIN);
         bikeOrder2.add(EBikeType.MOUNTAIN);
 
+        //2 bikes mixed
+        bikeOrder3 = new ArrayList<EBikeType>();
+        bikeOrder3.add(EBikeType.MOUNTAIN);
+        bikeOrder3.add(EBikeType.HYBRID);
+
         bike1 = new Bike(bt1,LocalDate.of(2016,2,5),ECondition.NEW);
+        bike2 = new Bike(bt2,LocalDate.of(2016,2,5),ECondition.NEW);
         bpr = new BikeProvider(brs,new Location("EH11 8SY","69 Street"),vPol,pPol);
         bpr.addBike(bike1);
+        bpr.addBike(bike2);
     }
 
     @Test
@@ -179,5 +190,55 @@ public class TestBikeProvider
         assertEquals(EBookingStatus.RETURNED,bookingOut.getStatus());
         //then see if it was removed
         assertEquals(false,bike1.containsBooking(bookingOut));    
+    }
+
+    @Test
+    void testMixedTypeBikesQuote()
+    {
+        //let's add some other bikes to the provider
+        //other bike type
+        BikeType btfiller = new BikeType(EBikeType.ROAD,new BigDecimal(100));
+        Bike bikefiller1 = new Bike(btfiller,LocalDate.of(2019,1,1),ECondition.AVERAGE);
+        Bike bikefiller2 = new Bike(btfiller,LocalDate.of(2019,1,1),ECondition.AVERAGE);
+        Bike bikefiller3 = new Bike(btfiller,LocalDate.of(2019,1,1),ECondition.AVERAGE);
+
+        //let's create a new bike of a different type
+
+        BikeType btWanted = new BikeType(EBikeType.ELECTRIC, new BigDecimal(100));
+        Bike bikeWanted = new Bike(btWanted, LocalDate.of(2019,1,1),ECondition.AVERAGE);
+
+        //let's create an order for an electric bike and a mountain bike
+
+        List<EBikeType> order = new ArrayList<EBikeType>();
+        order.add(EBikeType.ELECTRIC);
+        order.add(EBikeType.MOUNTAIN);
+        pPol.setDailyRentalPrice(btfiller, new BigDecimal(5));
+        pPol.setDailyRentalPrice(btWanted, new BigDecimal(5));
+        
+
+        bpr.addBike(bikefiller1);
+        bpr.addBike(bikefiller2);
+        bpr.addBike(bikefiller3);
+        bpr.addBike(bikeWanted);
+
+        Quote outQuote = bpr.createQuote(dr1, order);
+        //we are expecting
+        boolean b1Returned = false;
+        boolean bWantedReturned = false;
+
+        for(Bike b : outQuote.getBikes())
+        {
+            if(b == bike1)
+            {
+                b1Returned = true;
+            }
+            if(b == bikeWanted)
+            {
+                bWantedReturned = true;
+            }
+        }
+        assertTrue(b1Returned,"mountain bike wasn't returned");
+        assertTrue(bWantedReturned,"electric bike wasn't returned");
+
     }
 }

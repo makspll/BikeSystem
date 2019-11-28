@@ -36,7 +36,7 @@ public class TestBookingAQuote {
 	void setUp() {
 		DeliveryServiceFactory.setupMockDeliveryService();
 		DeliveryService ds = DeliveryServiceFactory.getDeliveryService();
-		brs = new BikeRentalSystem(ds, LocalDate.now());
+		brs = new BikeRentalSystem(LocalDate.now());
 		
 		Location cLoc = new Location("EH12FJ", "79 Street Street");
 		Location c2Loc = new Location("BQ36ZU", "123 Number Street");

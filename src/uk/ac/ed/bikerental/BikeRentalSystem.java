@@ -16,7 +16,6 @@ public class BikeRentalSystem {
 
 	private List<BikeProvider> bikeProviders;
 	private List<BikeType> bikeTypes;
-	private DeliveryService deliveryService;
 	private LocalDate currentDate;
 	private PaymentHandler paymentHandler;
 
@@ -30,11 +29,10 @@ public class BikeRentalSystem {
 		return eTypes; 
 		}
 	
-	public BikeRentalSystem(DeliveryService ds, LocalDate dateInitial)
+	public BikeRentalSystem(LocalDate dateInitial)
 	{
 		bikeProviders = new ArrayList<BikeProvider>();
 		bikeTypes = new ArrayList<BikeType>();
-		deliveryService = ds;
 		currentDate = dateInitial;
 		paymentHandler = new PaymentHandler();
 	}
@@ -99,6 +97,7 @@ public class BikeRentalSystem {
 		
 		//when finding a quote, we can only include providers near the selected location,
 		//and out of those, those who have the capacity to accommodate the choice of bikes
+
 		for (BikeProvider prov : bikeProviders) {
 			if (prov.getLocation().isNearTo(loc)) {
 				if (prov.canAccommodateRental(dates, bikes)) {
@@ -106,7 +105,7 @@ public class BikeRentalSystem {
 					quotes.add(newQuote);
 				}
 			}
-			
+		
 		}
 		
 		return quotes;
@@ -155,6 +154,7 @@ public class BikeRentalSystem {
 			for(Bike b : otherQuote.getBikes())
 			{
 				b.addBooking(createdBooking);
+				DeliveryService deliveryService = DeliveryServiceFactory.getDeliveryService();
 				deliveryService.scheduleDelivery(b, responsibleProvider.getLocation(), quoteInfo.address, q.getDates().getStart());
 			}
 		}
@@ -170,7 +170,7 @@ public class BikeRentalSystem {
 				&& q2.getDeposit().stripTrailingZeros().equals(q2.getDeposit().stripTrailingZeros());
 	}
 
-	public void recordReturnToOriginalProvider(int bookingNo)
+	public void recordReturnToOriginalProvider(int bookingNo) throws Exception
 	{
 		for(BikeProvider bp : bikeProviders)
 		{
@@ -178,15 +178,17 @@ public class BikeRentalSystem {
 			{
 				try {
 					bp.updateBooking(bookingNo, EBookingStatus.RETURNED);
+					return;
 				} catch (Exception e) {
 					//we checked the provider contains the booking
 					assert(false);
 				}
 			}
 		}
+		throw new Exception("provider with such booking could not be found");
 	}
 
-	public void recordBikeReturnToPartnerProvider(int bookingNo, int partnerId)
+	public void recordBikeReturnToPartnerProvider(int bookingNo, int partnerId) throws Exception
 	{
 		BikeProvider partner = null;
 		for(BikeProvider bp: bikeProviders)
@@ -197,7 +199,8 @@ public class BikeRentalSystem {
 				break;
 			}
 		}
-		assert(partner != null);
+		if(partner == null) throw new Exception("couldn't find such partner");
+	
 
 		for(BikeProvider bp : bikeProviders)
 		{
@@ -205,21 +208,45 @@ public class BikeRentalSystem {
 			{
 				try {
 					//update booking status
-					bp.updateBooking(bookingNo, EBookingStatus.DELIVERY_TO_PROVIDER);
-					List<Bike> bikes = bp.getBikesFromBooking(bookingNo);
+					Booking booking = bp.getBooking(bookingNo);
+					List<Bike> bikes = new ArrayList<Bike>();
+					for(Integer code : booking.getBikeCodes())
+					{
+						bikes.add(bp.getBikeWithCode(code));
+					}
 					//schedule deliveries
+					assert(bikes.size() > 0);
 					for(Bike b : bikes)
 					{
+	
+						DeliveryService deliveryService = DeliveryServiceFactory.getDeliveryService();
 						deliveryService.scheduleDelivery(b,partner.getLocation(), bp.getLocation(), currentDate);
+						assert(((MockDeliveryService)deliveryService).pickups.containsKey(currentDate));
 					}
 				} catch (Exception e) {
 					//we checked the provider contains the booking earlier
-					assert(false);
+					throw new Exception("code shouldn't be reached");
 				}
 			}
 		}
 	}
 
+	public Booking findBooking(int bookingNo) throws Exception
+	{
+		for(BikeProvider b : bikeProviders)
+		{
+			if(b.containsBooking(bookingNo))
+			{
+				try{
+					return(b.getBooking(bookingNo));
+				}catch(Exception e)
+				{
+					throw new Exception("cannot find booking");
+				}
+			}
+		}
+		return null;
+	}
 	public void stepDateForward()
 	{
 		currentDate = currentDate.plusDays(1);
