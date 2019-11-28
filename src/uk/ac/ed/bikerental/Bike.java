@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import uk.ac.ed.bikerental.Utils.EBookingStatus;
 
 public class Bike implements Deliverable {
-	private LinkedList<Booking> bookings;
+    private LinkedList<Booking> bookings;
     private BikeType type;
     private LocalDate manufactureDate;
     private Utils.ECondition condition;
@@ -144,7 +144,7 @@ public class Bike implements Deliverable {
     }
     
     public void addBooking(Booking b) {
-    	bookings.addLast(b);
+        bookings.addLast(b);
     }
     
     public void removeBooking(Booking b) {

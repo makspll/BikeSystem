@@ -19,17 +19,17 @@ public class Customer
     
     ///constructors
     public Customer(BikeRentalSystem brs, String pName, String pSurname, String pPhone, Location pLocation) {
-    	bikeSystem = brs;
-    	name = pName;
-    	surname = pSurname;
-    	phone = pPhone;
-    	location = pLocation;
-    	currentInvoices = new LinkedList<Invoice>();
+        bikeSystem = brs;
+        name = pName;
+        surname = pSurname;
+        phone = pPhone;
+        location = pLocation;
+        currentInvoices = new LinkedList<Invoice>();
     }
 
     ///getters
     public List<Invoice> getCurrentInvoices() {
-    	return currentInvoices;
+        return currentInvoices;
     }
     public Location getLocation() {return location;}
     public String getPhone() {return phone;}
@@ -45,11 +45,11 @@ public class Customer
     ///private parts
 
     public void removeInvoice (Invoice inv) {
-    	for (Invoice i : currentInvoices) {
-    		if (i.getOrderCode() == inv.getOrderCode()) {
-    			currentInvoices.remove(i);
-    		}
-    	}
+        for (Invoice i : currentInvoices) {
+            if (i.getOrderCode() == inv.getOrderCode()) {
+                currentInvoices.remove(i);
+            }
+        }
     }
     
     public List<Quote> findQuotes(DateRange dates,

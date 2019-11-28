@@ -11,9 +11,9 @@ public class Location {
     }
     
     public boolean isNearTo(Location other) {
-    	
-    	String otherPostcode = other.postcode;
-    	
+        
+        String otherPostcode = other.postcode;
+        
         assert ( this.postcode != null       && otherPostcode != null       );
         assert ( this.postcode.length() >= 2 && otherPostcode.length() >= 2 );
         

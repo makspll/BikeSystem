@@ -17,10 +17,10 @@ public class QuoteInformation
         collectionMode = ECollectionMode.DELIVERY;
     }
     public QuoteInformation(Customer c, ECollectionMode pCollectionMode) {
-    	name = c.getName();
-    	surname = c.getSurname();
-    	phone = c.getPhone();
-    	address = c.getLocation();
-    	collectionMode = pCollectionMode;
+        name = c.getName();
+        surname = c.getSurname();
+        phone = c.getPhone();
+        address = c.getLocation();
+        collectionMode = pCollectionMode;
     }
 }

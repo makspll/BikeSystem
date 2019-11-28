@@ -43,9 +43,9 @@ public class DateRange {
         //two dates overlap if  s2 <= s1 <= e2 or s2 <= e1 <= e2 from both points of view
         
         if (getEnd().compareTo(other.getStart()) >= 0 && other.getEnd().compareTo(getStart()) >= 0) {
-        	return true;
+            return true;
         } else {
-        	return false;
+            return false;
         }
         
     }
