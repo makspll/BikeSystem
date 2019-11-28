@@ -75,31 +75,6 @@ public class BikeProvider {
 
 		throw new Exception("No booking with that code was found");
 	}
-
-	public List<Bike> getBikesFromBooking(int orderNo) throws Exception
-	{
-
-		Booking b;
-		try{
-			b = getBooking(orderNo);
-		}catch(Exception e){
-			throw new Exception("no such booking");
-		}
-		List<Bike> bikes = new ArrayList<Bike>();
-		assert(b.getBikeCodes().size() > 0);
-		for(int bikeCode : b.getBikeCodes())
-		{
-			for(Bike bike : bikes)
-			{
-				if(bike.getCode() == bikeCode)
-				{
-					bikes.add(bike);
-				}
-			}
-		}
-
-		return bikes;
-	}
 	
 	public Bike getBikeWithCode(int code) throws Exception {
 		
@@ -291,19 +266,6 @@ public class BikeProvider {
 		return bikes;
 	}
 	
-	public EBookingStatus findBookingStatus(int orderCode) throws Exception {
-
-		// To test our code, we might want to assert that every orderCode appears only once in our list. 
-			
-		for (Booking b : allBookings) {											
-			if (b.getOrderCode() == orderCode) {
-				return b.getStatus();
-			}
-		}
-	
-		throw new Exception("This provider cannot update a booking it doesn't have.");
-		//ya gotta throw an exception, only then the compiler knows this shouldn't be reached
-	}
 	
 	boolean containsBooking(Booking b)
 	{

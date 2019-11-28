@@ -5,22 +5,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import uk.ac.ed.bikerental.Utils.*;
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.time.LocalDate;
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+
 public class SystemTests {
 
 	// TODO : include table that tells the marker where to find the tests for which use case
 	
-    //TODO tests for the use cases
 	BikeRentalSystem brs;
 	int bpr1ID,bpr2ID;
 	int b1,b2,b3,b4,b5;
