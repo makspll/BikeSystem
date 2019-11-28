@@ -25,10 +25,15 @@ public class SystemTests {
 
     @BeforeEach
     void setUp() throws Exception {
-		DeliveryServiceFactory.setupMockDeliveryService();
 		/*
-		setting up a system with 2 providers, at the customers location, 3 bike types, and 5 bikes
+			setting up a system with 2 providers, at the customers location, 3 bike types, and 5 bikes
+			we believe this is enough data to test most variations in code flow
 		*/
+		DeliveryServiceFactory.setupMockDeliveryService();
+		resetDeliveryService();
+		StandardPricingPolicy spp = new StandardPricingPolicy();
+		StandardValuationPolicy svp = new StandardValuationPolicy(1f);
+
 		brs = new BikeRentalSystem(LocalDate.now());
 		
 		cloc = new Location("EH12FJ", "79 Street Street");
@@ -37,13 +42,12 @@ public class SystemTests {
 		c2 = new Customer(brs, "Rob", "Beasley" , "0123/456789", c2loc);
 		
 		loc = new Location("EH89QX", "5 Main Street");
-		StandardPricingPolicy spp = new StandardPricingPolicy();
-		StandardValuationPolicy svp = new StandardValuationPolicy(1f);
 		bpr1ID = brs.registerProvider(loc, svp, spp);
 		
 		loc2 = new Location("EH89BL", "12 Side Street");
 		bpr2ID = brs.registerProvider(loc2, svp, spp);
 		
+		//register bikes and bike types, this requires the registering to work correctly
 		try {
 			BikeType bt1 = brs.registerBikeType(EBikeType.MOUNTAIN, new BigDecimal(500));
 			spp.setDailyRentalPrice(bt1, new BigDecimal(10));
@@ -79,6 +83,7 @@ public class SystemTests {
 		}
     }
 
+	//////////////////////////////////////TESTS FOR FINDING QUOTE USE CASE START HERE//////////////////////////////////////////
     @Test
     void findingAQuoteSimpleScenarios()
     {
@@ -104,6 +109,7 @@ public class SystemTests {
 		//now check the quote is what we expect
 		//we should get a quote from provider 1, with the 2 cheapest bikes so b1/b2 and b3
 		assertEquals(quotes.get(0).getProvider().getId(),bpr1ID,"quote returned is from wrong provider");
+
 		boolean b1Found = false;
 		boolean b3Found = false;
 		boolean nonRequestedTypeReturned = false;
@@ -125,21 +131,27 @@ public class SystemTests {
 				nonRequested = currBikeType;
 			}
 		}
+		
+
 		assertFalse(nonRequestedTypeReturned,"a bike with different type than requested was in the quote:" + nonRequested);
 		assertTrue(b1Found,"bike 1 was not in the returned quote");
 		assertTrue(b3Found,"bike 3 was not in the returned quote: " + quotes.get(0).getBikes().get(0).getBikeType().getType() +  quotes.get(0).getBikes().get(1).getBikeType().getType());
-
-
 	}
+
 	@Test
-	void findingAQuoteWhenBikesNeededBooked()
+	void testFindingAQuoteFail()
 	{
+		/*
+			tests what happens when all the bikes required are booked or unavailable at given dates
+		*/
+
 		//let's try to make an order for 3 hybrid bikes, which should not give us any quotes
 		List<EBikeType> order = new ArrayList<EBikeType>();
 		order.add(EBikeType.HYBRID);
 		order.add(EBikeType.HYBRID);
 		order.add(EBikeType.HYBRID);
 
+		//attempt to get a quote
 		List<Quote> quotes = null;
 		try{
 			quotes = c.findQuotes(new DateRange(LocalDate.of(2019,1,1),LocalDate.of(2019,1,2)),order, loc);
@@ -148,10 +160,13 @@ public class SystemTests {
 			assertTrue(false,"exception when looking for quotes");
 		}
 
+		//we should not receive any quotes!
 		assertEquals(0,quotes.size(),"quotes returned when they shouldn't be");
 
 		//let's try another order, this time for one bike on a range that is booked already
 		//let's book all our mountain bikes
+
+		//we create a booking with 2 mountain bikes b1 and b2
 		DateRange dates = new DateRange(LocalDate.of(2019, 1, 1),LocalDate.of(2019,1,2));
 		List<Integer> inOrder = new ArrayList<Integer>();
 		inOrder.add(b1);
@@ -164,10 +179,12 @@ public class SystemTests {
 		{
 			assertTrue(false,"exception when getting provider by id");
 		}
-		//now try to get an order for a mountain bike 
+		
+		//now create an order for a mountain bike
 		List<EBikeType> mountainBikeOrder = new ArrayList<EBikeType>();
 		mountainBikeOrder.add(EBikeType.MOUNTAIN);
 
+		//attempt to get a quote for the order
 		try{
 			quotes = c.findQuotes(dates,mountainBikeOrder, loc);
 		}catch (Exception e)
@@ -175,19 +192,25 @@ public class SystemTests {
 			assertTrue(false,"exception when looking for quotes");
 		}
 
-		//should not get quotes
+		//we should not get any since all of our mountain bikes are booked already at the given dates
 		assertEquals(0,quotes.size(),"found quotes in second order when it shouldn't have");
 		
 	}
 
 	@Test
-	void findingAQuoteWhenNoBikeProviders()
+	void testFindingQuoteNoProviders()
 	{
-		//let's try to get a quote in a location which does not have providers
+		/*
+			this tests what happens when we try to find a quote at a location without any registered bike providers
+		*/
+
+		//form an order for a mountain bike
 		List<EBikeType> order = new ArrayList<EBikeType>();
 		order.add(EBikeType.MOUNTAIN);
-
+		//at a location without any provider
 		Location noBikeZone = new Location("JAB123","42 wise st");
+
+		//attempt to get a quote
 		List<Quote> quotes = null;
 		try{
 			quotes = c.findQuotes(new DateRange(LocalDate.of(2019,1,1),LocalDate.of(2019,1,2)),order, noBikeZone);
@@ -196,6 +219,7 @@ public class SystemTests {
 			assertTrue(false,"exception when looking for quotes");
 		}
 
+		//should not receive any quotes
 		assertEquals(0,quotes.size(),"found quotes even though providers arent near enough");
 	}
     
@@ -824,11 +848,13 @@ public class SystemTests {
     @Test
     void returningBikeToOriginalProvider()
     {
-		resetDeliveryService();
-		//--let's set up an order and progress it enough--
-		DateRange dates = new DateRange(LocalDate.of(2019,1,1),LocalDate.of(2019,1,3));
+		/*
+			this test tests the use case of a customer returning a bike to its original provider
+		*/
 
-		//bikes are away, so let's set them 
+		//we first set up a booking, and set it to the status BIKES_AWAY
+		DateRange dates = new DateRange(LocalDate.of(2019,1,1),LocalDate.of(2019,1,3));
+		//attempt to set the bikes' state to be out of the shop
 		Bike bikeB1 = null;
 		Bike bikeB2 = null;
 		try{
@@ -841,10 +867,12 @@ public class SystemTests {
 		bikeB1.setInStore(false);
 		bikeB2.setInStore(false);
 
+		//form an order
 		List<EBikeType> bikesInvolved = new ArrayList<EBikeType>();
 		bikesInvolved.add(EBikeType.MOUNTAIN);
 		bikesInvolved.add(EBikeType.MOUNTAIN);
 
+		//attempt to get a quote
 		Quote q = null;
 		try{
 			q = brs.getProviderWithID(bpr1ID).createQuote(dates, bikesInvolved);
@@ -852,10 +880,10 @@ public class SystemTests {
 		{
 			assertTrue(false,"error in setup");
 		}
-		
+		//we book the quote
 		c.orderQuote(q, ECollectionMode.PICKUP);
-		//booking is in state where the bikes are with client
-		//find the booking
+
+		//we now find the reference to the booking
 		Booking exampleBooking = null;
 		try{
 			exampleBooking = brs.getProviderWithID(bpr1ID).getBooking( c.getCurrentInvoices().get(0).orderCode );
@@ -864,9 +892,8 @@ public class SystemTests {
 			assertTrue(false,"error in setup");
 		}
 
-		//set the state
+		//set the state of it to BIKES_AWAY
 		exampleBooking.setBookingStatus(EBookingStatus.BIKES_AWAY);
-		//--TEST--
 
 		//start of the use case
 
@@ -878,20 +905,23 @@ public class SystemTests {
 			assertTrue(false,e.toString());
 		}
 
-		//let's see if everything was updated correctly
-
+		//check booking state
 		assertEquals(EBookingStatus.RETURNED,exampleBooking.getStatus(),"booking status wasn't updated correctly");
-		assertEquals(true,bikeB1.inStore(),"bike 1 was not reset, it's not shown as in store");
-		assertEquals(true,bikeB1.inStore(),"bike 2 was not reset, it's not shown as in store");
+		assertEquals(true,bikeB1.inStore(),"bike 1 was not changed correctly");
+		assertEquals(true,bikeB1.inStore(),"bike 2 was not changed correctly");
 
 	}
 	
 	@Test
 	void returningBikeToPartnerProvider()
 	{
-		resetDeliveryService();
-		brs.setDate(LocalDate.of(2019,1,1));
-		//set up providers
+		/*
+			this test tests the use case of a customer returning a bike to its partner provider
+		*/
+
+		//we set up the system first, and get booking to the BIKES_AWAY state
+
+		//we attempt to find the providers in order to set up the partnership
 		BikeProvider prov1 = null;
 		BikeProvider prov2 = null;
 		try{
@@ -901,13 +931,17 @@ public class SystemTests {
 		{
 			assertTrue(false,"error in setup");
 		}
+
 		//set up partnership
 		prov1.addPartner(prov2);
 		prov2.addPartner(prov1);
 
 		//set up order
 		DateRange dates = new DateRange(LocalDate.of(2019,1,1),LocalDate.of(2019,1,3));
-		//bikes are away, so let's set them 
+		//we set up the date to be the start day of the booking
+		brs.setDate(LocalDate.of(2019,1,1));
+
+		//bikes are away, so let's set their state appropriately
 		Bike bikeB1 = null;
 		Bike bikeB2 = null;
 		try{
@@ -920,10 +954,12 @@ public class SystemTests {
 		bikeB1.setInStore(false);
 		bikeB2.setInStore(false);
 
+		//form an order
 		List<EBikeType> bikesInvolved = new ArrayList<EBikeType>();
 		bikesInvolved.add(EBikeType.MOUNTAIN);
 		bikesInvolved.add(EBikeType.MOUNTAIN);
 
+		//attempt to get a quote for it
 		Quote q = null;
 		try{
 			q = brs.getProviderWithID(bpr1ID).createQuote(dates, bikesInvolved);
@@ -932,9 +968,10 @@ public class SystemTests {
 			assertTrue(false,"error in setup");
 		}
 		
+		//book the quote
 		c.orderQuote(q, ECollectionMode.PICKUP);
-		//booking is in state where the bikes are with client
-		//find the booking
+
+		//we now retrieve the booking
 		Booking exampleBooking = null;
 		try{
 			exampleBooking = brs.getProviderWithID(bpr1ID).getBooking( c.getCurrentInvoices().get(0).orderCode );
@@ -943,12 +980,15 @@ public class SystemTests {
 			assertTrue(false,"error in setup");
 		}
 
-		//set the state and date to return day
+		//set the state to the expiry date of the booking
 		exampleBooking.setBookingStatus(EBookingStatus.BIKES_AWAY);
 		brs.setDate(LocalDate.of(2019,1,2));
 		//reset deliveries
 		resetDeliveryService();
-		//--TEST--
+
+		//Beggining of the use case
+
+		//customer returns the bike
 		try{
 			c.returnBikeToPartnerProvider(exampleBooking.getOrderCode(), bpr2ID);
 		} catch (Exception e)
@@ -956,34 +996,41 @@ public class SystemTests {
 			assertTrue(false,e.toString());
 		}
 
+		//check state didn't change yet
 		assertEquals(EBookingStatus.BIKES_AWAY,exampleBooking.getStatus(),"booking status wasn't updated correctly");
-		assertEquals(false,bikeB1.inStore(),"bike 1 was not reset, it's not shown as in out of store");
-		assertEquals(false,bikeB2.inStore(),"bike 2 was not reset, it's not shown as in out of store");
+		assertEquals(false,bikeB1.inStore(),"bike 1 was not changed correctly");
+		assertEquals(false,bikeB2.inStore(),"bike 2 was not changed correctly");
+
+		//shop closes, and the delivery service does its job
 
 		//perform pickups
 		MockDeliveryService mds = (MockDeliveryService)DeliveryServiceFactory.getDeliveryService();
 		mds.carryOutPickups(brs.getDate());
 
-		//check state
+		//check state changed correctly
 		assertEquals(EBookingStatus.DELIVERY_TO_PROVIDER,exampleBooking.getStatus(),"booking status wasn't updated correctly");
-		assertEquals(false,bikeB1.inStore(),"bike 1 was not reset, it's not shown as in out of store");
-		assertEquals(false,bikeB2.inStore(),"bike 2 was not reset, it's not shown as in out of store");
+		assertEquals(false,bikeB1.inStore(),"bike 1 was not changed correctly");
+		assertEquals(false,bikeB2.inStore(),"bike 2 was not changed correctly");
 		//carry out dropoffs
 		mds.carryOutDropoffs();
-		//check state
+
+		//check state changed correctly
 		assertEquals(EBookingStatus.RETURNED,exampleBooking.getStatus(),"booking status wasn't updated correctly");
-		assertEquals(true,bikeB1.inStore(),"bike 1 was not reset, it's not shown as in out of store");
-		assertEquals(true,bikeB2.inStore(),"bike 2 was not reset, it's not shown as in out of store");
+		assertEquals(true,bikeB1.inStore(),"bike 1 was not changed correctly");
+		assertEquals(true,bikeB2.inStore(),"bike 2 was not changed correctly");
 
 
 	}
-	////////////////////////SIMULATION WITH DELIVERY SERVICE ////////////////////
+	////////////////////////SIMULATION WITH DELIVERY SERVICE ALL USE CASES ////////////////////
 	
 	@Test
 	void allUseCasesWithDelivery()
 	{
-		resetDeliveryService();
-		//set up partners
+		/*
+			this is the final test, we simulate a full operation on a single order, with all the use cases required
+		*/
+
+		//we begin by setting up the partnership 
 		BikeProvider bpr1 = null;
 		BikeProvider bpr2 = null;
 		try{
@@ -996,13 +1043,20 @@ public class SystemTests {
 		bpr1.addPartner(bpr2);
 		bpr2.addPartner(bpr1);
 
+		//and set the day to the following date
 		brs.setDate(LocalDate.of(2019,1,1));
+
+		//BEGIN SIMULATION/////////////////
 		//day 2019 1 1 -------------
-		//let's go through an order with deliveries both ways and see if the order status is right throughout
-		//1 mountain bike order
+
+		//form 1 mountain bike order
 		List<EBikeType> order = new ArrayList<EBikeType>();
 		order.add(EBikeType.MOUNTAIN);
+
+		//the order will be delivered tomorrow, and expire the next day
 		DateRange dates = new DateRange(LocalDate.of(2019,1,2),LocalDate.of(2019,1,3));
+
+		//the customer asks for quotes for his order
 		List<Quote> quotes = null;
 		try{
 			quotes = c.findQuotes(dates, order, cloc);
@@ -1010,15 +1064,17 @@ public class SystemTests {
 		{
 			assertTrue(false,"exception in finding quotes");
 		}
+
+		//there is only one bike in the quote
 		Bike bike = quotes.get(0).getBikes().get(0);
 
 		//we should expect a single offer from provider 1 for bike 1
 		assertTrue(quotes.size() == 1,"too many quotes");
 
-		//order the quote
+		//the customer decides to book the quote
 		c.orderQuote(quotes.get(0),ECollectionMode.DELIVERY);
 
-		//find the booking
+		//find the booking from the customers invoice
 		Invoice invoice = c.getCurrentInvoices().get(0);
 		Booking booking = null;
 		try{
@@ -1027,9 +1083,11 @@ public class SystemTests {
 		{
 			assertTrue(false,"exception when finding booking: " + e.toString());
 		}
-		//check the status of booking
+
+		//check the initial status is correct
 		assertEquals(EBookingStatus.BOOKED,booking.getStatus());
-		//check bike is still in store
+
+		//check bike is still in store state-wise
 		assertEquals(true,bike.inStore(),"bike was not correctly updated after delivery");
 
 		//now after the closing hours, the mock delivery driver picks up the bikes
@@ -1041,26 +1099,39 @@ public class SystemTests {
 		// the day passes
 		brs.stepDateForward();
 
-		//day 2019 1 2 -------------
+		//day 2019 1 2 ------------- PICKUP DAY/delivery
+
+		//check the date is correctly incremented
 		assertTrue(brs.getDate().equals(LocalDate.of(2019,1,2)),"date wasn't incremented properly");
+
 		//check booking is still the same status
 		assertEquals(EBookingStatus.BOOKED,booking.getStatus());
 
-		//we are at pickup day
+
 		//no new customers
+
+
 		//closing hours
 		//delivery driver goes again
+
+		//pickups happen
 		ds.carryOutPickups(brs.getDate());
+
+		//our mountain bike should be picked up
 		//check the status
 		assertEquals(EBookingStatus.DELIVERY_TO_CLIENT,booking.getStatus(),"booking wasn't updated properly after delivery");
+
 		//then it drops off the bikes before the end of the day
 		ds.carryOutDropoffs();
-		//check the bikes were delivered
+
+		//check our bike was delivered
 		assertEquals(EBookingStatus.BIKES_AWAY,booking.getStatus(),"booking wasn't updated properly after delivery");
 		assertEquals(false,bike.inStore(),"bike was not correctly updated after delivery");
 
 		//the day passes
-		//day 2019 1 3 -------------
+
+		//day 2019 1 3 ------------- EXPIRY DAY/ delivery from partner to provider
+
 		brs.stepDateForward();
 
 		//check date was incremented properly
@@ -1074,22 +1145,24 @@ public class SystemTests {
 			assertTrue(false,"exception when returning bike");
 		}
 
-		//the bikes are still not picked up, and away so check status
+		//check the state has not changed, since the delivery hasnt come yet
 		assertEquals(EBookingStatus.BIKES_AWAY,booking.getStatus(),"booking wasn't updated properly after delivery");
-		//still not in store
+		//bikes are still not in the store
 		assertEquals(false,bike.inStore(),"bike was not correctly updated after delivery");
 
+		//closing hours
 
 		//delivery happens
 		ds.carryOutPickups(brs.getDate());
-		//check status
+		//check status changed correctly
+		//bike is picked up and now on way to original provider
 		assertEquals(EBookingStatus.DELIVERY_TO_PROVIDER,booking.getStatus(),"booking wasn't updated properly after delivery");
-		ds.carryOutDropoffs();
-		//check the status and if the bikes were returned
+		assertEquals(false,bike.inStore(),"bike was not correctly updated after delivery");
 
-		//the bikes are marked for delivery, check correct status
+		//drop offs happen
+		ds.carryOutDropoffs();
+		//check the bike is returned to original provider and in store
 		assertEquals(EBookingStatus.RETURNED,booking.getStatus(),"booking wasn't updated properly after delivery");
-		//still not in store
 		assertEquals(true,bike.inStore(),"bike was not correctly updated after delivery");
 
 	}
