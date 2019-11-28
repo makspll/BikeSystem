@@ -26,7 +26,7 @@ public class TestBikeProvider
     @BeforeEach
     void setUp()
     {
-        //to be booked
+        //to be booked on this date
         dr1 = new DateRange(LocalDate.of(2019,1,1), LocalDate.of(2019,1,7));
         //after booked
         dr2 = new DateRange(LocalDate.of(2019,1,8), LocalDate.of(2019,1,14));
@@ -45,16 +45,16 @@ public class TestBikeProvider
 
         BikeType bt2 = new BikeType(EBikeType.HYBRID, new BigDecimal(100));
         pPol.setDailyRentalPrice(bt2, new BigDecimal(10));
-        //1 bike
+        //order for 1 bike
         bikeOrder1 = new ArrayList<EBikeType>();
         bikeOrder1.add(EBikeType.MOUNTAIN);
 
-        //2 bikes
+        //order for 2 bikes
         bikeOrder2 = new ArrayList<EBikeType>();
         bikeOrder2.add(EBikeType.MOUNTAIN);
         bikeOrder2.add(EBikeType.MOUNTAIN);
 
-        //2 bikes mixed
+        //order for 2 bikes with mixed type
         bikeOrder3 = new ArrayList<EBikeType>();
         bikeOrder3.add(EBikeType.MOUNTAIN);
         bikeOrder3.add(EBikeType.HYBRID);
@@ -62,6 +62,8 @@ public class TestBikeProvider
         bike1 = new Bike(bt1,LocalDate.of(2016,2,5),ECondition.NEW);
         bike2 = new Bike(bt2,LocalDate.of(2016,2,5),ECondition.NEW);
         bpr = new BikeProvider(brs,new Location("EH11 8SY","69 Street"),vPol,pPol);
+
+        //add the bikes to the bike provider
         bpr.addBike(bike1);
         bpr.addBike(bike2);
     }
@@ -69,7 +71,9 @@ public class TestBikeProvider
     @Test
     void testIDs()
     {
-        //reset the static id counter
+        //test that ID's are updated correctly
+
+        //record the static ID counter, since it gets affected by other tests
         int lastTakenID = BikeProvider.getIDCounter();
         BikeRentalSystem brs = null;
         BikeProvider bp1 = new BikeProvider(brs,new Location("asdasds","asdasd"),new StandardValuationPolicy(1f), new StandardPricingPolicy());
@@ -82,42 +86,52 @@ public class TestBikeProvider
     @Test
     void testCanAccomodate()
     {
-        //set up
+        //chek if the bike providers correctly calcualte availability for quotes
+
+        //set up with a quote from order 1
         Quote outQuote = bpr.createQuote(dr1, bikeOrder1);
+        
         //test
         
         //only bike we could possibly receive
-        assert(outQuote.getBikes().contains(bike1));
+        assertTrue(outQuote.getBikes().contains(bike1),"quote doesn't contain bike 1");
         //we asked for one bike
-        assertEquals(1,outQuote.getBikes().size());
+        assertEquals(1,outQuote.getBikes().size(), "more than one bike in quote");
         //the quote should cover the date range we wanted
 
-        //TODO possibly move this to system tests, in general make sure the tests are 'UNIT tests', idk man, it's 6 am and my bed is looking more attractive than a jar of pickles
-        assertEquals(dr1,outQuote.getDates());
-        assertEquals(new BigDecimal(70).stripTrailingZeros(),outQuote.getPrice().stripTrailingZeros());
-        assertEquals(new BigDecimal(50).stripTrailingZeros(),outQuote.getDeposit().stripTrailingZeros());
+        //check the quote covers the right date range
+        assertEquals(dr1,outQuote.getDates(),"date range was changed in quote");
+
+        //additionally check the prices are correct
+        assertEquals(new BigDecimal(70).stripTrailingZeros(),outQuote.getPrice().stripTrailingZeros(),"price has changed in quote");
+        assertEquals(new BigDecimal(50).stripTrailingZeros(),outQuote.getDeposit().stripTrailingZeros(),"deposit has changed in quote");
     }
 
     @Test
     void testCantAccomodate()
     {
+        //same as above but for unavailable dates/orders
+
         //set up
         Quote outQuote = bpr.createQuote(dr1, bikeOrder1);
         QuoteInformation qInfo = new QuoteInformation();
         bpr.createBooking(outQuote, qInfo);
+
         //test
 
         //dates overlap fully
-        assertEquals(false, bpr.canAccommodateRental(dr1, bikeOrder1));
+        assertEquals(false, bpr.canAccommodateRental(dr1, bikeOrder1),"bike provider shouldn't be able to accomodate this rental");
         //not enough bikes
-        assertEquals(false, bpr.canAccommodateRental(dr2, bikeOrder2));
+        assertEquals(false, bpr.canAccommodateRental(dr2, bikeOrder2),"bike provider shouldn't be able to accomodate this rental");
         //dates overlap partially
-        assertEquals(false, bpr.canAccommodateRental(dr3, bikeOrder1));
+        assertEquals(false, bpr.canAccommodateRental(dr3, bikeOrder1),"bike provider shouldn't be able to accomodate this rental");
     }
 
     @Test
     void testCreateBooking()
     {
+        //test the creation of bookings
+
         //setup
         Quote outQuote = bpr.createQuote(dr1, bikeOrder1);
         QuoteInformation qInfo = new QuoteInformation();
@@ -127,12 +141,12 @@ public class TestBikeProvider
         Booking bookingOut = bpr.createBooking(outQuote, qInfo);
 
         //see if the booking was added
-        assertEquals(true,bpr.containsBooking(bookingOut));
+        assertEquals(true,bpr.containsBooking(bookingOut),"the booking was not added correctly");
 
         //check the bookings fields are what we ordered in the quote
 
         //same amount of bikes
-        assertEquals(outQuote.getBikes().size(),bookingOut.getBikeCodes().size());
+        assertEquals(outQuote.getBikes().size(),bookingOut.getBikeCodes().size(), "the bikes in the quote have different cardinality");
         //same bikes
         int totalBikes = outQuote.getBikes().size();
         for(Bike b : outQuote.getBikes())
@@ -145,23 +159,25 @@ public class TestBikeProvider
                 }
             }
         }
-        assertEquals(0,totalBikes);
+        assertEquals(0,totalBikes,"not all bikes in the quote were present in the booking");
         //same dates
-        assertEquals(outQuote.getDates(),bookingOut.getDates());
+        assertEquals(outQuote.getDates(),bookingOut.getDates(),"date has changed");
         //same price and deposit
-        assertEquals(outQuote.getPrice(), bookingOut.getPrice());
-        assertEquals(outQuote.getDeposit(), bookingOut.getDeposit());
+        assertEquals(outQuote.getPrice(), bookingOut.getPrice(),"price has changed");
+        assertEquals(outQuote.getDeposit(), bookingOut.getDeposit(),"deposit has changed");
         //same provider info
-        assertEquals(outQuote.getProvider().getId(), bookingOut.getProviderID());
+        assertEquals(outQuote.getProvider().getId(), bookingOut.getProviderID(),"provider has changed");
         //same quote information
 
         //now check the booking has been added to the bikes appropriately
-        assert(bike1.containsBooking(bookingOut));
+        assertTrue(bike1.containsBooking(bookingOut),"booking wasn't added to the relevant bike");
     }
 
     @Test
     void testUpdateBooking()
     {
+        //test the booking update function works correctly
+
         //setup
         Quote outQuote = bpr.createQuote(dr1, bikeOrder1);
         QuoteInformation qInfo = new QuoteInformation();
@@ -174,10 +190,10 @@ public class TestBikeProvider
         try {
             bpr.updateBooking(bookingOut.getOrderCode(),EBookingStatus.DELIVERY_TO_CLIENT);
         } catch (Exception e) {
-            assert(false);
+            assertTrue(false,"couldnt update booking");
         }
         //check the booking updates correctly
-        assertEquals(EBookingStatus.DELIVERY_TO_CLIENT,bookingOut.getStatus());
+        assertEquals(EBookingStatus.DELIVERY_TO_CLIENT,bookingOut.getStatus(),"status did not change appropriately");
 
         //now check if bookings are removed from appropriate bikes on RETURNED
         try {
@@ -187,9 +203,9 @@ public class TestBikeProvider
             assert(false);
         }
         //first update was correct
-        assertEquals(EBookingStatus.RETURNED,bookingOut.getStatus());
+        assertEquals(EBookingStatus.RETURNED,bookingOut.getStatus(),"Booking status didn't update correctly");
         //then see if it was removed
-        assertEquals(false,bike1.containsBooking(bookingOut));    
+        assertEquals(false,bike1.containsBooking(bookingOut),"booking didn't get removed from bike1");    
     }
 
     @Test

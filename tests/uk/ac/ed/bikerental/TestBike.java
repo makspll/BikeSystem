@@ -21,15 +21,15 @@ public class TestBike
         BikeType mountain = new BikeType(Utils.EBikeType.MOUNTAIN, new BigDecimal(100));
         b1 = new Bike(mountain, LocalDate.of(1998,1,12), Utils.ECondition.NEW);
 
-        //booked
+        //date range to be booked
         dr1 = new DateRange(LocalDate.of(2019,1,1),
                             LocalDate.of(2019,1,7));
 
-        //right after booked
+        //right after booked range
         dr2 = new DateRange(LocalDate.of(2019,1,8),
                             LocalDate.of(2019,1,10));
 
-        //overlaps with booked partially
+        //overlaps with booked partially one way
         dr3 = new DateRange(LocalDate.of(2019,1,7),
                             LocalDate.of(2019,1,8));
 
@@ -37,7 +37,7 @@ public class TestBike
         dr4 = new DateRange(LocalDate.of(2018,12,28),
                             LocalDate.of(2018,12,31));
 
-        //overlaps with booked partially
+        //overlaps with booked partially the other way
         dr5 = new DateRange(LocalDate.of(2018,12,31),
                             LocalDate.of(2019,1,1));
 
@@ -47,13 +47,16 @@ public class TestBike
         booking = new Booking(BigDecimal.ZERO,BigDecimal.ZERO,bikes,dr1,0,ECollectionMode.DELIVERY);
         booking2 = new Booking(BigDecimal.ZERO,BigDecimal.ZERO,bikes,dr2,0,ECollectionMode.DELIVERY);
 
+        //we add the dr1 booking to the bike
         b1.addBooking(booking);
+        
                        
     }
 
     @Test
     void testIsAvailableTrue()
     {
+        //bike 1 should be available on dr2 and dr4
         assertEquals(true,b1.isAvailable(dr2));
         assertEquals(true,b1.isAvailable(dr4));
     }
@@ -61,6 +64,7 @@ public class TestBike
     @Test
     void testIsAvailableFalse()
     {
+        //bike 1 should not be available on the overlapping dates
         assertEquals(false,b1.isAvailable(dr1));
         assertEquals(false,b1.isAvailable(dr3));
         assertEquals(false,b1.isAvailable(dr5));
@@ -69,8 +73,12 @@ public class TestBike
     @Test
     void testOnPickupFromProvider()
     {
-        //initial state is already set
+        //we check onPickup works correctly
+
+        //the initial status is BOOKED
         b1.onPickup();
+
+        //check it changes correctly
         assertEquals(Utils.EBookingStatus.DELIVERY_TO_CLIENT,booking.getStatus());
         assertEquals(false,b1.inStore()); 
     }
@@ -110,8 +118,6 @@ public class TestBike
         b1.onDropoff();
         assertEquals(Utils.EBookingStatus.RETURNED,booking.getStatus());
         assertEquals(true,b1.inStore());
-        //check the booking is deleted, since it becomes inactive
-        //assert(b1.bookings.size() == 0);
     }
     @Test
     void testMultipleBookingsIsAvailableTrue()
