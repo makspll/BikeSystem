@@ -2,6 +2,8 @@ package uk.ac.ed.bikerental;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedList;
+
 import uk.ac.ed.bikerental.Utils.EBikeType;
 import uk.ac.ed.bikerental.Utils.ECollectionMode;
 import uk.ac.ed.bikerental.BikeRentalSystem;
@@ -22,6 +24,7 @@ public class Customer
     	surname = pSurname;
     	phone = pPhone;
     	location = pLocation;
+    	currentInvoices = new LinkedList<Invoice>();
     }
 
     ///getters
@@ -76,7 +79,7 @@ public class Customer
 
     public boolean orderQuote(Quote q, ECollectionMode collectionMode)
     {
-        //withing book quote the system prompts the user to pay
+        //within book quote the system prompts the user to pay
         Invoice invoice;
         QuoteInformation quoteInfo = new QuoteInformation(this, collectionMode);
         try{

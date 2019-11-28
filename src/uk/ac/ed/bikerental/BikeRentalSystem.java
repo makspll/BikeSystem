@@ -99,7 +99,7 @@ public class BikeRentalSystem {
 		//and out of those, those who have the capacity to accomodate the choice of bikes
 		for (BikeProvider prov : bikeProviders) {
 			if (prov.getLocation().isNearTo(loc)) {
-				if (prov.canAccomodateRental(dates, bikes)) {
+				if (prov.canAccommodateRental(dates, bikes)) {
 					Quote newQuote = prov.createQuote(dates, bikes);
 					quotes.add(newQuote);
 				}
@@ -123,14 +123,16 @@ public class BikeRentalSystem {
 			bikeTypes.add(b.getBikeType().getType());
 		}
 
-		if(responsibleProvider.canAccomodateRental(q.getDates(),bikeTypes))
-		{
+		if(responsibleProvider.canAccommodateRental(q.getDates(),bikeTypes))
+		{	
 			otherQuote = responsibleProvider.createQuote(q.getDates(), bikeTypes);
-			if(q.getPrice() != otherQuote.getPrice() || q.getDeposit() != otherQuote.getDeposit())
+			
+			if(q.getPrice().stripTrailingZeros().equals(otherQuote.getPrice().stripTrailingZeros()) == false
+					|| q.getDeposit().stripTrailingZeros().equals(otherQuote.getDeposit().stripTrailingZeros()) == false)
 			{
-				throw new Exception("State has changed, quote cannot be accomodated at the same price anymore.");
+				throw new Exception("State has changed, quote cannot be accommodated at the same price anymore.");
 			}
-		} else throw new Exception("State has changed, quote cannot be accomodated anymore.");
+		} else throw new Exception("State has changed, quote cannot be accommodated anymore.");
 		
 
 		Booking createdBooking = responsibleProvider.createBooking(q, quoteInfo);
@@ -152,8 +154,9 @@ public class BikeRentalSystem {
 									  q.getDates().getEnd());
 
 		//schedule delivery for each bike
-		for(Bike b : q.getBikes())
+		for(Bike b : otherQuote.getBikes())
 		{
+			b.addBooking(createdBooking);
 			deliveryService.scheduleDelivery(b, responsibleProvider.getLocation(), quoteInfo.address, q.getDates().getStart());
 		}
 
