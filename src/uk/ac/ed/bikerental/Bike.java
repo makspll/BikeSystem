@@ -3,6 +3,8 @@ package uk.ac.ed.bikerental;
 import java.time.LocalDate;
 import java.util.LinkedList;
 
+import uk.ac.ed.bikerental.Utils.EBookingStatus;
+
 public class Bike implements Deliverable {
 	private LinkedList<Booking> bookings;
     private BikeType type;
@@ -88,8 +90,12 @@ public class Bike implements Deliverable {
 
         //we find the first booking time-wise
         Booking earliest = earliestBooking();
-        //we progress the earliest booking
-        earliest.progressBooking(true);
+        //we progress the earliest booking, if another bike hasn't done it already
+        if(earliest.getStatus().equals(EBookingStatus.BOOKED) || earliest.getStatus().equals(EBookingStatus.BIKES_AWAY))
+        {
+            earliest.progressBooking(true);
+        }
+        //we always change the state of the bike
         available = false;
     }
     @Override
@@ -97,17 +103,21 @@ public class Bike implements Deliverable {
     {
         //dropoffs could lead to a returned state, here we delete the booking from our list 
         Booking earliest = earliestBooking();
-        earliest.progressBooking(true);
+        //we progress the booking only if another bike hasn't done it yet
+        if(earliest.getStatus().equals(EBookingStatus.DELIVERY_TO_CLIENT) || earliest.getStatus().equals(EBookingStatus.DELIVERY_TO_PROVIDER))
+        {
+            earliest.progressBooking(true);
+            
+            if(earliest.getStatus() == Utils.EBookingStatus.RETURNED)
+            {
+                removeBooking(earliest);
+                
+            }
+        }
         if(earliest.getStatus() == Utils.EBookingStatus.RETURNED)
         {
-            removeBooking(earliest);
             available = true;
         }
-        else
-        {
-            return;
-        }
-
     }
     @Override
     public int hashCode() {

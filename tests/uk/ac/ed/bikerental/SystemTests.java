@@ -6,13 +6,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import uk.ac.ed.bikerental.Utils.*;
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.time.LocalDate;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-
 public class SystemTests {
 
 	// TODO : include table that tells the marker where to find the tests for which use case
@@ -391,7 +394,7 @@ public class SystemTests {
 		assertTrue(c.orderQuote(q, ECollectionMode.DELIVERY) , "Ordering the quote failed.");
 		
 		assertEquals(oneBike.get(0).getCode(),
-						((Bike)  ((MockDeliveryService) brs.getDeliveryService())
+						((Bike)  ((MockDeliveryService) DeliveryServiceFactory.getDeliveryService())
 								.getPickupsOn(q.getDates().getStart()).toArray()[0])
 									.getCode() , "Delivery failed to be added");
 		
@@ -435,7 +438,7 @@ public class SystemTests {
 		
 		assertTrue(c.orderQuote(q, ECollectionMode.PICKUP) , "Ordering the quote failed.");
 		
-		assertEquals(0 , ((MockDeliveryService) brs.getDeliveryService()).pickups.keySet().size() , "Delivery was falsely added");
+		assertEquals(0 , ((MockDeliveryService) DeliveryServiceFactory.getDeliveryService()).pickups.keySet().size() , "Delivery was falsely added");
 		
 	}
 	
@@ -825,6 +828,7 @@ public class SystemTests {
     @Test
     void returningBikeToOriginalProvider()
     {
+		resetDeliveryService();
 		//--let's set up an order and progress it enough--
 		DateRange dates = new DateRange(LocalDate.of(2019,1,1),LocalDate.of(2019,1,3));
 
@@ -889,6 +893,8 @@ public class SystemTests {
 	@Test
 	void returningBikeToPartnerProvider()
 	{
+		resetDeliveryService();
+		brs.setDate(LocalDate.of(2019,1,1));
 		//set up providers
 		BikeProvider prov1 = null;
 		BikeProvider prov2 = null;
@@ -941,8 +947,11 @@ public class SystemTests {
 			assertTrue(false,"error in setup");
 		}
 
-		//set the state
+		//set the state and date to return day
 		exampleBooking.setBookingStatus(EBookingStatus.BIKES_AWAY);
+		brs.setDate(LocalDate.of(2019,1,2));
+		//reset deliveries
+		resetDeliveryService();
 		//--TEST--
 		try{
 			c.returnBikeToPartnerProvider(exampleBooking.getOrderCode(), bpr2ID);
@@ -950,26 +959,34 @@ public class SystemTests {
 		{
 			assertTrue(false,e.toString());
 		}
-		//see if everything updated correctly
-		DeliveryServiceFactory.getDeliveryService().scheduleDelivery(bikeB1, loc, loc, brs.getDate());
 
+		assertEquals(EBookingStatus.BIKES_AWAY,exampleBooking.getStatus(),"booking status wasn't updated correctly");
+		assertEquals(false,bikeB1.inStore(),"bike 1 was not reset, it's not shown as in out of store");
+		assertEquals(false,bikeB2.inStore(),"bike 2 was not reset, it's not shown as in out of store");
+
+		//perform pickups
+		MockDeliveryService mds = (MockDeliveryService)DeliveryServiceFactory.getDeliveryService();
+		mds.carryOutPickups(brs.getDate());
+
+		//check state
 		assertEquals(EBookingStatus.DELIVERY_TO_PROVIDER,exampleBooking.getStatus(),"booking status wasn't updated correctly");
 		assertEquals(false,bikeB1.inStore(),"bike 1 was not reset, it's not shown as in out of store");
-		assertEquals(false,bikeB1.inStore(),"bike 2 was not reset, it's not shown as in out of store");
+		assertEquals(false,bikeB2.inStore(),"bike 2 was not reset, it's not shown as in out of store");
+		//carry out dropoffs
+		mds.carryOutDropoffs();
+		//check state
+		assertEquals(EBookingStatus.RETURNED,exampleBooking.getStatus(),"booking status wasn't updated correctly");
+		assertEquals(true,bikeB1.inStore(),"bike 1 was not reset, it's not shown as in out of store");
+		assertEquals(true,bikeB2.inStore(),"bike 2 was not reset, it's not shown as in out of store");
 
-		//check delivery is scheduled
-		boolean scheduledPickup = false;
-		for(LocalDate l : ((MockDeliveryService)DeliveryServiceFactory.getDeliveryService()).pickups.keySet())
-		{
-			if(l.equals(brs.getDate())) scheduledPickup = true;
-		}
-		assertTrue(scheduledPickup,"pickup wasn't scheduled correctly");
+
 	}
 	////////////////////////SIMULATION WITH DELIVERY SERVICE ////////////////////
 	
 	@Test
 	void allUseCasesWithDelivery()
 	{
+		resetDeliveryService();
 		//set up partners
 		BikeProvider bpr1 = null;
 		BikeProvider bpr2 = null;
@@ -1079,6 +1096,13 @@ public class SystemTests {
 		//still not in store
 		assertEquals(true,bike.inStore(),"bike was not correctly updated after delivery");
 
+	}
+
+	void resetDeliveryService()
+	{
+		MockDeliveryService	msf = (MockDeliveryService)DeliveryServiceFactory.getDeliveryService();
+		msf.pickups = new HashMap<LocalDate,Collection<Deliverable>>(); 
+		msf.dropoffs = new ArrayDeque<Deliverable>();
 	}
 
 }

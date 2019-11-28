@@ -1,13 +1,13 @@
 package uk.ac.ed.bikerental;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import uk.ac.ed.bikerental.Utils.EBookingStatus;
 import uk.ac.ed.bikerental.Utils.ECollectionMode;
 
 public class Booking {
-
 	private int orderCode;
 	private BigDecimal deposit;
 	private BigDecimal price;
@@ -16,7 +16,6 @@ public class Booking {
 	private DateRange dates;
 	private int providerID;
 	private ECollectionMode collectionMode;
-
 	private static int UNIQUE_CODE_COUNT = 0;
 	
 	///getters setters
@@ -49,6 +48,8 @@ public class Booking {
 	}
 	public void progressBooking(boolean progressedByDeliveryService) {
 		//FSM for the bookings, it can always go 2 ways (when active), except when it's in delivery, then there's only one way
+		//each booking can only be updated once per delivery, so not every bike should update the booking
+
 		switch (status) {
 			case BOOKED: 
 				status = (progressedByDeliveryService)?Utils.EBookingStatus.DELIVERY_TO_CLIENT: Utils.EBookingStatus.BIKES_AWAY;

@@ -27,10 +27,7 @@ public class BikeRentalSystem {
 			eTypes.add(b.getType());
 		}
 		return eTypes; 
-	}
-	public DeliveryService getDeliveryService() {
-		return this.deliveryService;
-	}
+		}
 	
 	public BikeRentalSystem(LocalDate dateInitial)
 	{
