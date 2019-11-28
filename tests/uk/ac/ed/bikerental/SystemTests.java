@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import uk.ac.ed.bikerental.Utils.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -1022,7 +1023,53 @@ public class SystemTests {
 
 	}
 	////////////////////////SIMULATION WITH DELIVERY SERVICE ALL USE CASES ////////////////////
-	
+	@Test
+	void TestExtensionSubmodule()
+	{
+		/*
+			we see if our extension submodule works correctly with our system
+		*/
+
+		//change pricing policy to extension set up as in the coursework example
+
+		PricingPolicy extensionPolicy = new MultidayRateDiscountPolicy(2, 6, 13, 5);
+
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+			bpr1.changePricingPolicy(extensionPolicy);
+
+			extensionPolicy.setDailyRentalPrice(brs.getType(EBikeType.MOUNTAIN), new BigDecimal(10));
+			extensionPolicy.setDailyRentalPrice(brs.getType(EBikeType.HYBRID), new BigDecimal(10));
+		}catch (Exception e)
+		{
+			assertTrue(false, "exception when setting up");
+		}
+
+		//form simple order, which bike provider 1 can accomodate
+		List<EBikeType> order = new ArrayList<EBikeType>();
+		order.add(EBikeType.MOUNTAIN);	//daily price = 10
+		order.add(EBikeType.MOUNTAIN);	//daily price = 10
+		order.add(EBikeType.HYBRID);	//daily price = 10
+
+		//set up different date ranges
+		DateRange noDiscount = new DateRange(LocalDate.of(2019,1,1), LocalDate.of(2019,1,2)); //2 day  			-> T=>(2 * 30) 	Discount 	=> 0 * T	 Price=> 60
+		DateRange smallDiscount = new DateRange(LocalDate.of(2019,1,1), LocalDate.of(2019,1,6)); //6 days 		-> T=>(6 * 30) 	Discount 	=> 0.05 * T	 Price=> 171
+		DateRange mediumDiscount = new DateRange(LocalDate.of(2019,1,1), LocalDate.of(2019,1,13)); //13 days 	-> T=>(13 * 30) Discount 	=> 0.10 * T	 Price=> 351
+		DateRange maxDiscount = new DateRange(LocalDate.of(2019,1,1), LocalDate.of(2019,1,14));	//14 days 		-> T=>(14 * 30)	Discount	=> 0.15 * T	 Price=> 357
+
+		BigDecimal noDPrice = new BigDecimal(60.00).setScale(2,RoundingMode.HALF_UP).stripTrailingZeros();
+		BigDecimal smallDPrice = new BigDecimal(171.00).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
+		BigDecimal mediumDPrice = new BigDecimal(351.00).setScale(2,RoundingMode.HALF_UP).stripTrailingZeros();
+		BigDecimal maxDPrice = new BigDecimal(357.00).setScale(2,RoundingMode.HALF_UP).stripTrailingZeros();
+
+		//check the quotes give correct values
+		assertEquals(noDPrice,bpr1.createQuote(noDiscount, order).getPrice().stripTrailingZeros());
+		assertEquals(smallDPrice,bpr1.createQuote(smallDiscount, order).getPrice().stripTrailingZeros());
+		assertEquals(mediumDPrice,bpr1.createQuote(mediumDiscount, order).getPrice().stripTrailingZeros());
+		assertEquals(maxDPrice,bpr1.createQuote(maxDiscount, order).getPrice().stripTrailingZeros());
+
+	}
 	@Test
 	void allUseCasesWithDelivery()
 	{
