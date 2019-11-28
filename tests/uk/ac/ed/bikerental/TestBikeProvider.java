@@ -97,11 +97,11 @@ public class TestBikeProvider
         //test
 
         //dates overlap fully
-        assertEquals(false, bpr.canAccomodateRental(dr1, bikeOrder1));
+        assertEquals(false, bpr.canAccommodateRental(dr1, bikeOrder1));
         //not enough bikes
-        assertEquals(false, bpr.canAccomodateRental(dr2, bikeOrder2));
+        assertEquals(false, bpr.canAccommodateRental(dr2, bikeOrder2));
         //dates overlap partially
-        assertEquals(false, bpr.canAccomodateRental(dr3, bikeOrder1));
+        assertEquals(false, bpr.canAccommodateRental(dr3, bikeOrder1));
     }
 
     @Test
