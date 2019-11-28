@@ -352,6 +352,93 @@ public class SystemTests {
 		}
 	}
 	
+	@Test
+	void testDeliveryIsScheduled() {
+		////////////////////////Setting up the quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+
+		Quote q = new Quote(bpr1 , price, deposit, oneBike, dr);
+		////////////////////////Setting up the quote/////////////////////////////
+		
+		assertTrue(c.orderQuote(q, ECollectionMode.DELIVERY) , "Ordering the quote failed.");
+		
+		assertEquals(oneBike.get(0).getCode(),
+						((Bike)  ((MockDeliveryService) brs.getDeliveryService())
+								.getPickupsOn(q.getDates().getStart()).toArray()[0])
+									.getCode() , "Delivery failed to be added");
+		
+	}
+	
+	@Test
+	void testDeliveryDoesNotOccurWhenPickedUp( ) {
+		////////////////////////Setting up the quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+
+		Quote q = new Quote(bpr1 , price, deposit, oneBike, dr);
+		////////////////////////Setting up the quote/////////////////////////////
+		
+		assertTrue(c.orderQuote(q, ECollectionMode.PICKUP) , "Ordering the quote failed.");
+		
+		assertEquals(0 , ((MockDeliveryService) brs.getDeliveryService()).pickups.keySet().size() , "Delivery was falsely added");
+		
+	}
+	
 	// We also want a valid order to go through if it contains more than one bike of the same provider. 
 	@Test
 	void testDoubleOrderGoesThrough() {

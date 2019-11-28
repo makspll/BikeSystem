@@ -6,8 +6,12 @@ import java.time.LocalDate;
 
 public class StandardValuationPolicy implements ValuationPolicy {
 
-	float depositRate;
+	public float depositRate;
 
+	public StandardValuationPolicy() {
+		depositRate = (float) 1;
+	}
+	
 	public StandardValuationPolicy(float dr)
 	{
 		depositRate = dr;
