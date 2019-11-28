@@ -18,6 +18,7 @@ public class BikeRentalSystem {
 	private List<BikeType> bikeTypes;
 	private DeliveryService deliveryService;
 	private LocalDate currentDate;
+	private PaymentHandler paymentHandler;
 
 	public List<BikeProvider> getProviders() { return bikeProviders; }
 	public List<EBikeType> getEBikeTypes() {
@@ -35,6 +36,7 @@ public class BikeRentalSystem {
 		bikeTypes = new ArrayList<BikeType>();
 		deliveryService = ds;
 		currentDate = dateInitial;
+		paymentHandler = new PaymentHandler();
 	}
 	
 	public BikeType registerBikeType(EBikeType Ebt, BigDecimal replacementVal) throws Exception
@@ -96,7 +98,7 @@ public class BikeRentalSystem {
 		LinkedList<Quote> quotes = new LinkedList<Quote>();
 		
 		//when finding a quote, we can only include providers near the selected location,
-		//and out of those, those who have the capacity to accomodate the choice of bikes
+		//and out of those, those who have the capacity to accommodate the choice of bikes
 		for (BikeProvider prov : bikeProviders) {
 			if (prov.getLocation().isNearTo(loc)) {
 				if (prov.canAccommodateRental(dates, bikes)) {
@@ -127,40 +129,45 @@ public class BikeRentalSystem {
 		{	
 			otherQuote = responsibleProvider.createQuote(q.getDates(), bikeTypes);
 			
-			if(q.getPrice().stripTrailingZeros().equals(otherQuote.getPrice().stripTrailingZeros()) == false
-					|| q.getDeposit().stripTrailingZeros().equals(otherQuote.getDeposit().stripTrailingZeros()) == false)
+			if(areQuotesEquivalent(q, otherQuote) == false)
 			{
 				throw new Exception("State has changed, quote cannot be accommodated at the same price anymore.");
 			}
 		} else throw new Exception("State has changed, quote cannot be accommodated anymore.");
 		
 
-		Booking createdBooking = responsibleProvider.createBooking(q, quoteInfo);
+		Booking createdBooking = responsibleProvider.createBooking(otherQuote, quoteInfo);
 		Location pickup = (createdBooking.getCollectionMode() == ECollectionMode.DELIVERY)? quoteInfo.address:responsibleProvider.getLocation();
 		String summary = "OrderNo: " + createdBooking.getOrderCode() + '\n'+
 						 "Pickup: " + pickup.toString() + '\n' +
 						 "Return To: " + responsibleProvider.toString() + '\n' +
-						 "Return By: " + q.getDates().getEnd().toString() + '\n';
+						 "Return By: " + otherQuote.getDates().getEnd().toString() + '\n';
 
-		Invoice invoice = new Invoice(createdBooking.getOrderCode(),
+		Invoice invoice = new Invoice(createdBooking,
 									  summary, 
-									  createdBooking.getDeposit(), 
-									  createdBooking.getPrice(),
-									  createdBooking.getBikeCodes(),
 									  responsibleProvider.getLocation(),
 									  pickup,
 									  quoteInfo.
-									  collectionMode,
-									  q.getDates().getEnd());
+									  collectionMode);
 
-		//schedule delivery for each bike
-		for(Bike b : otherQuote.getBikes())
-		{
-			b.addBooking(createdBooking);
-			deliveryService.scheduleDelivery(b, responsibleProvider.getLocation(), quoteInfo.address, q.getDates().getStart());
+		//schedule delivery for each bike, if we are dealing with a delivery 
+		if (quoteInfo.collectionMode == ECollectionMode.DELIVERY) {
+			for(Bike b : otherQuote.getBikes())
+			{
+				b.addBooking(createdBooking);
+				deliveryService.scheduleDelivery(b, responsibleProvider.getLocation(), quoteInfo.address, q.getDates().getStart());
+			}
 		}
+		
+		
+		paymentHandler.payTo("This function call is merely a placeholder, since we don't need to worry about payments");
 
 		return invoice;
+	}
+	
+	private boolean areQuotesEquivalent(Quote q1, Quote q2) {
+		return q1.getPrice().stripTrailingZeros().equals(q2.getPrice().stripTrailingZeros())
+				&& q2.getDeposit().stripTrailingZeros().equals(q2.getDeposit().stripTrailingZeros());
 	}
 
 	public void recordReturnToOriginalProvider(int bookingNo)

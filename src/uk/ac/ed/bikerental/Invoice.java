@@ -18,24 +18,20 @@ public class Invoice
 
 
     ///constructors
-    public Invoice(int orderNumber, String summary,
-                    BigDecimal dep,
-                    BigDecimal pri,
-                    List<Integer> bikes,
+    public Invoice(Booking b, String summary,
                     Location returnL,
                     Location pickupL,
-                    Utils.ECollectionMode cMode,
-                    LocalDate returnBy)
+                    Utils.ECollectionMode cMode)
     {
-        orderCode = orderNumber;
+        orderCode = b.getOrderCode();
         orderSummary = summary;
-        deposit = dep;
-        price = pri;
-        bikeCodes = bikes;
+        deposit = b.getDeposit();
+        price = b.getPrice();
+        bikeCodes = b.getBikeCodes();
         returnLocation = returnL;
         pickupLocation = pickupL;
         collectionMode = cMode;
-        returnDate = returnBy;
+        returnDate = b.getDates().getEnd();
     }
     ///getters
 
