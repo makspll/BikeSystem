@@ -1,7 +1,5 @@
 package uk.ac.ed.bikerental;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
@@ -134,53 +132,53 @@ public class BikeProvider {
     }
     
     public Quote createQuote(DateRange dr, Collection<EBikeType> pBikes) {
-        
-        // yes, we assume that we can accommodate the rental, as the bike system checks that before
-        assertTrue(this.canAccommodateRental(dr, pBikes) , "Rental cannot be accommodated");
+		
+		// yes, we assume that we can accommodate the rental, as the bike system checks that before
+		assert(this.canAccommodateRental(dr, pBikes));
 
-        //we are doing this on a first come first served basis, first bikes that appear in the list are preffered over the later ones
-        //since the list is sorted by bike price, then this will yield the cheapest set of bikes (individually and not as a group)
+		//we are doing this on a first come first served basis, first bikes that appear in the list are preferred over the later ones
+		//since the list is sorted by bike price, then this will yield the cheapest set of bikes (individually and not as a group)
 
-        //so let's choose our finest bikes 
-        ArrayList<Bike> bikesInTheQuote = new ArrayList<Bike>();
-        BigDecimal deposit = new BigDecimal(0);
-        
-        //for each bike type requested
-        outerloop:
-        for (EBikeType type : pBikes) {
-            //test if for some type we can't supply
-            boolean haveThisType = false;
-            //go through all bikes
-            for (Bike bike : bikes) {
-                if(bike.getBikeType().getType().equals(type))
-                {
-                    haveThisType = true;
-                }
-                //pick the available ones with the type we need, and which we haven't already picked
-                if (bike.isAvailable(dr) && bike.getBikeType().getType().equals(type) && !bikesInTheQuote.contains(bike)) {
-                    bikesInTheQuote.add(bike);
-                    deposit = deposit.add(vPolicy.calculateValue(bike, bike.getManufactureDate()));
-    
-                    //stop when we found enough
-                    if(bikesInTheQuote.size() == pBikes.size()){break outerloop;}
-                    //also stop looking for bikes for each type when we found one already
-                    break;
-                }
-            }
-            assertTrue(haveThisType,"error in creating quote, we were supposed to have this type of bike");
-        }
+		//so let's choose our finest bikes 
+		ArrayList<Bike> bikesInTheQuote = new ArrayList<Bike>();
+		BigDecimal deposit = new BigDecimal(0);
+		
+		//for each bike type requested
+		outerloop:
+		for (EBikeType type : pBikes) {
+			//test if for some type we can't supply
+			boolean haveThisType = false;
+			//go through all bikes
+			for (Bike bike : bikes) {
+				if(bike.getBikeType().getType().equals(type))
+				{
+					haveThisType = true;
+				}
+				//pick the available ones with the type we need, and which we haven't already picked
+				if (bike.isAvailable(dr) && bike.getBikeType().getType().equals(type) && !bikesInTheQuote.contains(bike)) {
+					bikesInTheQuote.add(bike);
+					deposit = deposit.add(vPolicy.calculateValue(bike, bike.getManufactureDate()));
+	
+					//stop when we found enough
+					if(bikesInTheQuote.size() == pBikes.size()){break outerloop;}
+					//also stop looking for bikes for each type when we found one already
+					break;
+				}
+			}
+			assert(haveThisType);
+		}
 
-        //we better have found enough, this is a double sanity check
-        assert(pBikes.size() == bikesInTheQuote.size());
-        
-        //complete the rest of the quote
-        BigDecimal quotePrice = pPolicy.calculatePrice(bikesInTheQuote, dr);
-        
-        Quote q = new Quote(this, quotePrice, deposit, bikesInTheQuote, dr);
-        
-        return q;
-        
-    }
+		//we better have found enough, this is a double sanity check
+		assert(pBikes.size() == bikesInTheQuote.size());
+		
+		//complete the rest of the quote
+		BigDecimal quotePrice = pPolicy.calculatePrice(bikesInTheQuote, dr);
+		
+		Quote q = new Quote(this, quotePrice, deposit, bikesInTheQuote, dr);
+		
+		return q;
+		
+	}
     
     public Booking createBooking(Quote q, QuoteInformation qInfo) {
         

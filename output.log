@@ -1,0 +1,83 @@
+
+Thanks for using JUnit! Support its development at https://junit.org/sponsoring
+
+╷
+├─ JUnit Jupiter ✔
+│  ├─ TestBike ✔
+│  │  ├─ testOnPickupFromProvider() ✔
+│  │  ├─ testMultipleBookingsIsAvailableTrue() ✔
+│  │  ├─ testIsAvailableTrue() ✔
+│  │  ├─ testOnPickupFromPartnerProvider() ✔
+│  │  ├─ testIsAvailableFalse() ✔
+│  │  ├─ testOnDropOffToProvider() ✔
+│  │  ├─ testMultipleBookingsIsAvailableFalse() ✔
+│  │  └─ testOnDropOffToClient() ✔
+│  ├─ TestStandardPolicies ✔
+│  │  ├─ testStandardValuationPolicy() ✔
+│  │  └─ testStandardPricingPolicy() ✔
+│  ├─ TestDateRange ✔
+│  │  ├─ testOverlapsFalse() ✔
+│  │  ├─ testToYears1() ✔
+│  │  ├─ testToYears3() ✔
+│  │  └─ testOverlapsTrue() ✔
+│  ├─ TestValuationPolicy ✔
+│  │  └─ testInterfaceWithOtherClasses() ✔
+│  ├─ TestLocation ✔
+│  │  ├─ testFarLocations() ✔
+│  │  └─ testNearLocations() ✔
+│  ├─ TestBikeProvider ✔
+│  │  ├─ testMixedTypeBikesQuote() ✔
+│  │  ├─ testIDs() ✔
+│  │  ├─ testCanAccomodate() ✔
+│  │  ├─ testCreateBooking() ✔
+│  │  ├─ testUpdateBooking() ✔
+│  │  └─ testCantAccomodate() ✔
+│  ├─ TestMultiDayRateDiscountPolicy ✔
+│  │  ├─ testBigDiscount() ✔
+│  │  ├─ testMediumDiscount() ✔
+│  │  ├─ testSmallDiscount() ✔
+│  │  └─ testNoDiscount() ✔
+│  ├─ TestBooking ✔
+│  │  ├─ testBookedTransitions() ✔
+│  │  ├─ testBikesAwayTransitions() ✔
+│  │  └─ testDeliveryTransitions() ✔
+│  ├─ TestBikeRentalSystem ✔
+│  │  ├─ testStepDateForward() ✔
+│  │  ├─ testRegisterBike() ✔
+│  │  ├─ testRegisterBikeType() ✔
+│  │  └─ testRegisterProvider() ✔
+│  └─ SystemTests ✔
+│     ├─ returningBikeToOriginalProvider() ✔
+│     ├─ testOrderFailsIfNotEnoughBikesCanBeProvided() ✔
+│     ├─ testTwoCustomersCanOrderQuotes() ✔
+│     ├─ testSimpleOrderGoesThrough() ✔
+│     ├─ testTwoEquivalentOrdersGoThrough() ✔
+│     ├─ testOrderFailsIfBikeTypeIsNotAvailable() ✔
+│     ├─ testSimpleOrderAddsInvoice() ✔
+│     ├─ testFindingQuoteNoProviders() ✔
+│     ├─ testDeliveryIsScheduled() ✔
+│     ├─ allUseCasesWithDelivery() ✔
+│     ├─ testFindingAQuoteFail() ✔
+│     ├─ testDoubleOrderGoesThrough() ✔
+│     ├─ TestExtensionSubmodule() ✔
+│     ├─ findingAQuoteSimpleScenarios() ✔
+│     ├─ testDeliveryDoesNotOccurWhenPickedUp() ✔
+│     ├─ testSimpleOrderProducesBooking() ✔
+│     ├─ testEquivalentOrdersProduceBookings() ✔
+│     └─ returningBikeToPartnerProvider() ✔
+└─ JUnit Vintage ✔
+
+Test run finished after 335 ms
+[        12 containers found      ]
+[         0 containers skipped    ]
+[        12 containers started    ]
+[         0 containers aborted    ]
+[        12 containers successful ]
+[         0 containers failed     ]
+[        52 tests found           ]
+[         0 tests skipped         ]
+[        52 tests started         ]
+[         0 tests aborted         ]
+[        52 tests successful      ]
+[         0 tests failed          ]
+

@@ -126,6 +126,10 @@ public class BikeRentalSystem {
 
         if(responsibleProvider.canAccommodateRental(q.getDates(),bikeTypes))
         {	
+	    // Here we create a quote with the same prerequisites as the one that was originally supposed to be ordered. 
+	    // We do this to account for the possibility that, even if one or more bikes have been reserved since
+	    // the original quote was created, the customer may be able to receive a quote with bikes of the same types, for the same price/deposit. 
+            
             otherQuote = responsibleProvider.createQuote(q.getDates(), bikeTypes);
             
             if(areQuotesEquivalent(q, otherQuote) == false)

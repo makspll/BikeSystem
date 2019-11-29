@@ -16,7 +16,34 @@ import java.util.HashMap;
 
 public class SystemTests {
 
-    // TODO : include table that tells the marker where to find the tests for which use case
+        // ORDER OF TESTS: 
+	////////////////////////////////////////////////////////////////////////////
+	// 1. ) Finding a quote 
+	// 1.1) Finding a quote - Simple Scenarios
+	// 1.2) Finding a quote - Fail
+	// 1.3) Finding a quote - No Providers
+	////////////////////////////////////////////////////////////////////////////
+	// 2. ) Booking a Quote
+	// 2.1) Booking a quote - Simple Order goes through
+	// 2.2) Booking a quote - Simple Order produces Booking
+	// 2.3) Booking a quote - Simple Order adds Invoice
+	// 2.4) Booking a quote - Delivery is scheduled
+	// 2.5) Booking a quote - Delivery does not occur when picked up 
+	// 2.6) Booking a quote - Double order goes through
+	// 2.7) Booking a quote - Two Customers can order quotes
+	// 2.8) Booking a quote - Equivalent Orders go through
+	// 2.9) Booking a quote - Equivalent Orders produce Bookings
+	// 2.10)Booking a quote - Order fails if Bike Type is not available
+	// 2.11)Booking a quote - Order Fails if not enough Bikes can be provided
+	////////////////////////////////////////////////////////////////////////////
+	// 3. ) Returning a Bike
+	// 3.1) Returning a Bike - Original Provider
+	// 3-2) Returning a Bike - Partner Provider
+	////////////////////////////////////////////////////////////////////////////
+	// 4. ) Extra
+	// 4.1) Extra - Extension Submodule
+	// 4.2) Extra - all Use cases with delivery
+	////////////////////////////////////////////////////////////////////////////
     
     BikeRentalSystem brs;
     int bpr1ID,bpr2ID;
@@ -225,626 +252,665 @@ public class SystemTests {
     }
     
     ////////////////////START TESTS FOR BOOKING A QUOTE//////////////////////////
+	
+    // This test asserts that, when a simple single-bike quote is ordered, 
+    // the process is successful, i.e. a non-null invoice is added to the customer object.
     @Test
-    void testSimpleOrderGoesThrough() {
-        ////////////////////////Setting up the quote/////////////////////////////
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
+	void testSimpleOrderGoesThrough() {
+		////////////////////////Setting up the quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
 
-        try {
-            oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                                                                          brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
 
-        Quote q = new Quote(bpr1 , price, deposit, oneBike, dr);
-        ////////////////////////Setting up the quote/////////////////////////////
-        
-        boolean success = c.orderQuote(q, ECollectionMode.PICKUP);
-        
-        assertTrue(success , "The booking was not successful");
-    }
-    
-    @Test
-    void testSimpleOrderProducesBooking() {
-        ////////////////////////Setting up the quote/////////////////////////////
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
-        try {
-            oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                                                                          brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
-        
-        Quote q = null;
-        try {
-            q = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        ////////////////////////Setting up the quote/////////////////////////////
+		Quote q = new Quote(bpr1 , price, deposit, oneBike, dr);
+		////////////////////////Setting up the quote/////////////////////////////
+		
+		boolean success = c.orderQuote(q, ECollectionMode.PICKUP);
+		
+		assertTrue(success , "The booking was not successful");
+	}
+	
+    // This test asserts that, given the same simple quote as before, 
+    // the booking that corresponds to the invoice has a valid status, and 
+    // that the start date of the booking is the one we would expect. 
+    // This is not decisive evidence, but some indicator that the booking is 
+    // indeed the correct one. The next test will then let us trust our system even more. 
+	@Test
+	void testSimpleOrderProducesBooking() {
+		//////////////////Start setting up the quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+				brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+		
+		Quote q = null;
+		try {
+			q = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		/////////////////End setting up the quote/////////////////////////////
 
-        c.orderQuote(q, ECollectionMode.DELIVERY);
+		c.orderQuote(q, ECollectionMode.DELIVERY);
 
-        int bookingNo = c.getCurrentInvoices().get(0).getOrderCode();
-        
-        try {
-            // Checks if Booking is booked
-            assertEquals(EBookingStatus.BOOKED , brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getStatus());
-        } catch(Exception e) {
-            assertTrue(false, "Exception occurred when getting provider or booking");
+		int bookingNo = c.getCurrentInvoices().get(0).getOrderCode();
+		
+		try {
+			// Checks if Booking is booked
+			assertEquals(EBookingStatus.BOOKED , brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getStatus() , "Booking is not BOOKED");
+		} catch(Exception e) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
 
-        try {
-            // Checks if start date is as expected
-            assertTrue(brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getDates().getStart().equals(today));
-        } catch (Exception e2) {
-            assertTrue(false, "Exception occurred when getting provider or booking");
-        }
-        }	
-    }
-    
-    @Test
-    void testSimpleOrderAddsInvoice() {
-        ////////////////////////Setting up the quote/////////////////////////////
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
-        try {
-            oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                                                                          brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
-        
-        Quote q = null;
-        try {
-            q = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        ////////////////////////Setting up the quote/////////////////////////////
-        
-        assertTrue(c.orderQuote(q, ECollectionMode.DELIVERY) , "Ordering the quote failed.");
-        
-        System.out.println(c.getCurrentInvoices().size());
-        try {
-            assertEquals(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getCode() , 
-                            c.getCurrentInvoices().get(0).getBikeCodes().get(0));
-        } catch (Exception e) {
-            assertTrue(false , "An error occurred when getting the bike/provider with the appropriate ID");
-        }
-    }
-    
-    @Test
-    void testDeliveryIsScheduled() {
-        ////////////////////////Setting up the quote/////////////////////////////
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			// Checks if start date is as expected
+			assertTrue(brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getDates().getStart().equals(today) , "Unexpected Start Date");
+		} catch (Exception e2) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
+		}
+		}	
+	}
+	
+	// This test asserts that, given the same simple quote as before, 
+	// the customer receives precisely one invoice, which contains the bike we would expect:
+	// The mountain bike we let our 1st provider register first.
+	@Test
+	void testSimpleOrderAddsInvoice() {
+		////////////////////Start setting up the quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+		
+		Quote q = null;
+		try {
+			q = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		///////////////////End setting up the quote/////////////////////////////
+		
+		assertTrue(c.orderQuote(q, ECollectionMode.DELIVERY) , "Ordering the quote failed.");
+		
+		// Test that customer receives precisely one invoice
+		assertEquals(c.getCurrentInvoices().size() , 1 , "The customer has too many or too few invoices");
+		
+		// Test that the bike in the invoice is as expected
+		try {
+			assertEquals(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getCode() , 
+							c.getCurrentInvoices().get(0).getBikeCodes().get(0) , "Invoice contains unexpected bike");
+		} catch (Exception e) {
+			assertTrue(false , "An error occurred when getting the bike/provider with the appropriate ID");
+		}
+	}
+	
+	// In the following test, we check that, if the customer chooses the DELIVERY option
+	// when ordering a quote, our mock delivery service actually schedules a delivery for 
+	// the bike with the correct code.
+	@Test
+	void testDeliveryIsScheduled() {
+		/////////////////////Start setting up the quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
 
-        try {
-            oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                                                                          brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
 
-        Quote q = new Quote(bpr1 , price, deposit, oneBike, dr);
-        ////////////////////////Setting up the quote/////////////////////////////
-        
-        assertTrue(c.orderQuote(q, ECollectionMode.DELIVERY) , "Ordering the quote failed.");
-        
-        assertEquals(oneBike.get(0).getCode(),
-                        ((Bike)  ((MockDeliveryService) DeliveryServiceFactory.getDeliveryService())
-                                .getPickupsOn(q.getDates().getStart()).toArray()[0])
-                                    .getCode() , "Delivery failed to be added");
-        
-    }
-    
-    @Test
-    void testDeliveryDoesNotOccurWhenPickedUp( ) {
-        ////////////////////////Setting up the quote/////////////////////////////
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		Quote q = new Quote(bpr1 , price, deposit, oneBike, dr);
+		////////////////////End setting up the quote/////////////////////////////
+		
+		assertTrue(c.orderQuote(q, ECollectionMode.DELIVERY) , "Ordering the quote failed.");
+		
+		// Test that code of bike and quote and code of the bike a delivery has been scheduled for are the same. 
+		assertEquals(oneBike.get(0).getCode(),
+						((Bike)  ((MockDeliveryService) DeliveryServiceFactory.getDeliveryService())
+								.getPickupsOn(q.getDates().getStart()).toArray()[0])
+									.getCode() , "Delivery failed to be added");
+		
+	}
+	
+	// This test asserts that no delivery is scheduled when the customer chooses the
+	// PICKUP option when ordering a quote. 
+	@Test
+	void testDeliveryDoesNotOccurWhenPickedUp( ) {
+		//////////////////////Start setting up the quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
 
-        try {
-            oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                                                                          brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
 
-        Quote q = new Quote(bpr1 , price, deposit, oneBike, dr);
-        ////////////////////////Setting up the quote/////////////////////////////
-        
-        assertTrue(c.orderQuote(q, ECollectionMode.PICKUP) , "Ordering the quote failed.");
-        
-        assertEquals(0 , ((MockDeliveryService) DeliveryServiceFactory.getDeliveryService()).pickups.keySet().size() , "Delivery was falsely added");
-        
-    }
-    
-    // We also want a valid order to go through if it contains more than one bike of the same provider. 
-    @Test
-    void testDoubleOrderGoesThrough() {
-        ////////////////////////Setting up the quote/////////////////////////////
-        LinkedList<Bike> twoBikes = new LinkedList<Bike>();
+		Quote q = new Quote(bpr1 , price, deposit, oneBike, dr);
+		////////////////////////End setting up the quote/////////////////////////////
+		
+		assertTrue(c.orderQuote(q, ECollectionMode.PICKUP) , "Ordering the quote failed.");
+		
+		assertEquals(0 , ((MockDeliveryService) DeliveryServiceFactory.getDeliveryService()).pickups.keySet().size() , "Delivery was falsely added");
+		
+	}
+	
+	// Now we want to check that quotes which contain more than one bike of the same provider,
+	// but are valid, are successfully ordered.
+	@Test
+	void testDoubleOrderGoesThrough() {
+		//////////////////Start setting up the quote/////////////////////////////
+		LinkedList<Bike> twoBikes = new LinkedList<Bike>();
 
-        try {
-            twoBikes.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-            twoBikes.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b3));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(twoBikes.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(twoBikes, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                      brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-            deposit = deposit.add(bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b2), 
-                      brs.getProviderWithID(bpr1ID).getBikeWithCode(b2).getManufactureDate()));
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
+		try {
+			twoBikes.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+			twoBikes.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b3));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(twoBikes.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(twoBikes, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+					  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+			deposit = deposit.add(bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b2), 
+					  brs.getProviderWithID(bpr1ID).getBikeWithCode(b2).getManufactureDate()));
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
 
-        Quote q = new Quote(bpr1 , price, deposit, twoBikes, dr);
-        ////////////////////////Setting up the quote/////////////////////////////
-        
-        boolean success = c.orderQuote(q, ECollectionMode.PICKUP);
-        
-        assertTrue(success , "The booking was not successful");
-    }
-    
-    @Test
-    void testTwoCustomersCanOrderQuotes() {
-        ////////////////////////Setting up the first quote/////////////////////////////
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
-        try {
-            oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                                                                          brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
-        
-        Quote q1 = null;
-        try {
-            q1 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        ////////////////////////Setting up the first quote/////////////////////////////
-        
-        boolean success1 = c.orderQuote(q1, ECollectionMode.PICKUP);
-        assertTrue(success1, "The first quote could not be ordered");
-        
-        ////////////////////////Setting up the second quote/////////////////////////////
-        LinkedList<Bike> otherBike = new LinkedList<Bike>();
-        try {
-            otherBike.add(brs.getProviderWithID(bpr2ID).getBikeWithCode(b5));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        
-        BikeProvider bpr2 = null;
-        try {
-            bpr2 = brs.getProviderWithID(bpr2ID);
-        } catch (Exception e1) {
-            assertTrue(false, "Failed retrieving the second bike provider");
-        }
-        
-        price = bpr2.getPricingPolicy().calculatePrice(otherBike, dr);
-        try {
-            deposit = bpr2.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr2ID).getBikeWithCode(b5), 
-                             brs.getProviderWithID(bpr2ID).getBikeWithCode(b5).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
-        
-        Quote q2 = null;
-        try {
-            q2 = new Quote(bpr2 , price, deposit, otherBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        ////////////////////////Setting up the second quote/////////////////////////////
-        
-        boolean success2 = c2.orderQuote(q2, ECollectionMode.DELIVERY);
-        assertTrue(success2, "Quote of second customer could not be booked");
-        
-    }
-    
-    // Here, we have two quotes involving the same bike. The quote should go through 
-    // since the 1st provider has 2 equivalent bikes of the same type / age / condition.
-    @Test
-    void testTwoEquivalentOrdersGoThrough() {
-        ////////////////////////Setting up the first quote/////////////////////////////
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
-        try {
-            oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                                                                          brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
-        
-        Quote q1 = null;
-        try {
-            q1 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        ////////////////////////Setting up the first quote/////////////////////////////
+		Quote q = new Quote(bpr1 , price, deposit, twoBikes, dr);
+		////////////////////End setting up the quote/////////////////////////////
+		
+		boolean success = c.orderQuote(q, ECollectionMode.PICKUP);
+		
+		assertTrue(success , "The booking was not successful");
+	}
+	
+	// Here, we simply let two customers order quotes that do not "overlap".
+	// Our test asserts that both quotes are successfully ordered, and that 
+	// our system can thus handle dealing with more than one Customer object. 
+	@Test
+	void testTwoCustomersCanOrderQuotes() {
+		//////////////////Start setting up the first quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+		
+		Quote q1 = null;
+		try {
+			q1 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		///////////////////End setting up the first quote/////////////////////////////
+		
+		boolean success1 = c.orderQuote(q1, ECollectionMode.PICKUP);
+		assertTrue(success1, "The first quote could not be ordered");
+		
+		////////////////////Start setting up the second quote/////////////////////////////
+		LinkedList<Bike> otherBike = new LinkedList<Bike>();
+		try {
+			otherBike.add(brs.getProviderWithID(bpr2ID).getBikeWithCode(b5));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		
+		BikeProvider bpr2 = null;
+		try {
+			bpr2 = brs.getProviderWithID(bpr2ID);
+		} catch (Exception e1) {
+			assertTrue(false, "Failed retrieving the second bike provider");
+		}
+		
+		price = bpr2.getPricingPolicy().calculatePrice(otherBike, dr);
+		try {
+			deposit = bpr2.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr2ID).getBikeWithCode(b5), 
+							 brs.getProviderWithID(bpr2ID).getBikeWithCode(b5).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+		
+		Quote q2 = null;
+		try {
+			q2 = new Quote(bpr2 , price, deposit, otherBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		///////////////////End setting up the second quote/////////////////////////////
+		
+		boolean success2 = c2.orderQuote(q2, ECollectionMode.DELIVERY);
+		assertTrue(success2, "Quote of second customer could not be booked");
+		
+	}
+	
+	// Here, we have two quotes involving the same bike. The quote should go through as well, 
+	// since the 1st provider has 2 equivalent bikes of the same type / age / condition.
+	// Note that the bike in the first and second quote are the same, but that the bike
+	// the second user receives is different from the one the first user receives. (see BikeRentalSystem.bookQuote())
+	@Test
+	void testTwoEquivalentOrdersGoThrough() {
+		//////////////////Start setting up the first quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+		
+		Quote q1 = null;
+		try {
+			q1 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		///////////////////End setting up the first quote/////////////////////////////
 
-        boolean success1 = c.orderQuote(q1, ECollectionMode.PICKUP);
-        
-        assertTrue(success1, "The first quote could not be ordered");
-        
-        ////////////////////////Setting up the second quote/////////////////////////////
-        Quote q2 = null;
-        try {
-            q2 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        ////////////////////////Setting up the first quote/////////////////////////////
-        
-        boolean success2 = c.orderQuote(q2, ECollectionMode.PICKUP);
-        
-        assertTrue(success2, "The second quote could not be ordered");
-    }
-    
-    @Test
-    void testEquivalentOrdersProduceBookings() {
-        ////////////////////////Setting up the first quote/////////////////////////////
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
-        try {
-            oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                                                                          brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
-        
-        Quote q1 = null;
-        try {
-            q1 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        ////////////////////////Setting up the first quote/////////////////////////////
+		boolean success1 = c.orderQuote(q1, ECollectionMode.PICKUP);
+		
+		assertTrue(success1, "The first quote could not be ordered");
+		
+		/////////////////////Start setting up the second quote/////////////////////////////
+		Quote q2 = null;
+		try {
+			q2 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		///////////////////End setting up the second quote/////////////////////////////
+		
+		boolean success2 = c.orderQuote(q2, ECollectionMode.PICKUP);
+		
+		assertTrue(success2, "The second quote could not be ordered");
+	}
+	
+	
+	// This test simply asserts that the equivalent orders from the previous test
+	// produce valid bookings.
+	@Test
+	void testEquivalentOrdersProduceBookings() {
+		//////////////////Start setting up the first quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+		
+		Quote q1 = null;
+		try {
+			q1 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		///////////////////End setting up the first quote/////////////////////////////
 
-        boolean success1 = c.orderQuote(q1, ECollectionMode.PICKUP);
-        
-        assertTrue(success1, "The first quote could not be ordered");
-        
-        ////////////////////////Setting up the second quote/////////////////////////////
-        Quote q2 = null;
-        try {
-            q2 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        ////////////////////////Setting up the first quote/////////////////////////////
-        
-        int bookingNo = c.getCurrentInvoices().get(0).getOrderCode();
-        
-        try {
-            assertEquals(EBookingStatus.BOOKED , brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getStatus());
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider or booking");
-        }	// Checks if 1st Booking is booked
-        try {
-            assertTrue(brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getDates().getStart().equals(today) , "The bookings got mixed up, or the information for booking 1 got altered");
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider or booking");
-        }
-        try {
-            assertEquals(EBookingStatus.BOOKED , brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getStatus());
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider or booking");
-        }	// Checks if 2nd Booking is booked
-        try {
-            assertTrue(brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getDates().getStart().equals(today) , "The bookings got mixed up, or the information for booking 1 got altered");
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider or booking");
-        }		
-    }
-    
-    @Test
-    void testOrderFailsIfBikeTypeIsNotAvailable() {
-        ////////////////////////Setting up the quote/////////////////////////////
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
-        try {
-            oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
-                                                                          brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
-        ////////////////////////Setting up the quote/////////////////////////////
-        
-        Quote q = null;
-        try {
-            q = new Quote(brs.getProviderWithID(bpr2ID) , price, deposit, oneBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        
-        boolean success = c.orderQuote(q, ECollectionMode.PICKUP);
-        assertFalse(success , "The order goes through even though the 2nd provider doesn't offer mountain bikes");
-        
-        assertTrue(c.getCurrentInvoices().size() == 0 , "An invoice was added when it shouldn't have");
-    }
-    
-    @Test
-    void testOrderFailsIfNotEnoughBikesCanBeProvided() {
-        LinkedList<Bike> oneBike = new LinkedList<Bike>();
-        try {
-            oneBike.add(brs.getProviderWithID(bpr2ID).getBikeWithCode(b4));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        
-        LinkedList<Bike> otherBike = new LinkedList<Bike>();
-        try {
-            otherBike.add(brs.getProviderWithID(bpr2ID).getBikeWithCode(b5));
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when adding bike to collection");
-        }
-        
-        LocalDate today = LocalDate.now();
-        LocalDate soon = LocalDate.now().plusDays(3);
-        DateRange dr = new DateRange(today, soon);
-        
-        BikeProvider bpr1 = null;
-        try{
-            bpr1 = brs.getProviderWithID(bpr1ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        BikeProvider bpr2 = null;
-        try{
-            bpr2 = brs.getProviderWithID(bpr2ID);
-        }catch(Exception e)
-        {
-            assertTrue(false,"exception when getting provider");
-        }
-        
-        BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
-        BigDecimal deposit = null;
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr2ID).getBikeWithCode(b4), 
-                             brs.getProviderWithID(bpr2ID).getBikeWithCode(b4).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
-        
-        Quote q1 = null;
-        try {
-            q1 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
+		boolean success1 = c.orderQuote(q1, ECollectionMode.PICKUP);
+		
+		assertTrue(success1, "The first quote could not be ordered");
+		
+		///////////////////Start setting up the second quote/////////////////////////////
+		Quote q2 = null;
+		try {
+			q2 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		////////////////////End setting up the second quote/////////////////////////////
+		
+		int bookingNo = c.getCurrentInvoices().get(0).getOrderCode();
+		
+		try {
+			assertEquals(EBookingStatus.BOOKED , brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getStatus());
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
+		}	// Checks if 1st Booking is booked
+		try {
+			assertTrue(brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getDates().getStart().equals(today) , "The bookings got mixed up, or the information for booking 1 got altered");
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
+		}
+		try {
+			assertEquals(EBookingStatus.BOOKED , brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getStatus());
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
+		}	// Checks if 2nd Booking is booked
+		try {
+			assertTrue(brs.getProviderWithID(bpr1ID).getBooking(bookingNo).getDates().getStart().equals(today) , "The bookings got mixed up, or the information for booking 1 got altered");
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider or booking");
+		}		
+	}
+	
+	// In this test, we try ordering a bike of a type which the according provider cannot 
+	// provide. We do this by assigning a quote that is meant for provider 1 to provider 2. 
+	// This test asserts that no unexpected exceptions occur while doing so, but that 
+	// ordering the quote still fails. 
+	@Test
+	void testOrderFailsIfBikeTypeIsNotAvailable() {
+		////////////////////////Setting up the quote/////////////////////////////
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		assert(oneBike.get(0).getManufactureDate().equals(LocalDate.now().minusYears(5)));
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr1ID).getBikeWithCode(b1), 
+																		  brs.getProviderWithID(bpr1ID).getBikeWithCode(b1).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+		////////////////////////Setting up the quote/////////////////////////////
+		
+		Quote q = null;
+		// Here, we assign the quote to the wrong provider on purpose. 
+		try {
+			q = new Quote(brs.getProviderWithID(bpr2ID) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		
+		boolean success = c.orderQuote(q, ECollectionMode.PICKUP);
+		assertFalse(success , "The order goes through even though the 2nd provider doesn't offer mountain bikes");
+		
+		assertTrue(c.getCurrentInvoices().size() == 0 , "An invoice was added when it shouldn't have");
+	}
+	
+	// This test asserts that ordering 2 quotes "successfully fails" if we try
+	// to book more bikes of a certain type than the according provider can provide,
+	// even if the provider has access to enough bikes to satisfy both orders individually. 
+	// We are thus making sure that bikes of a provider are reserved appropriately when booked,
+	// and then ignored when a customer tries to book a bike of the same type again.
+	@Test
+	void testOrderFailsIfNotEnoughBikesCanBeProvided() {
+		LinkedList<Bike> oneBike = new LinkedList<Bike>();
+		try {
+			oneBike.add(brs.getProviderWithID(bpr2ID).getBikeWithCode(b4));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		
+		LinkedList<Bike> otherBike = new LinkedList<Bike>();
+		try {
+			otherBike.add(brs.getProviderWithID(bpr2ID).getBikeWithCode(b5));
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when adding bike to collection");
+		}
+		
+		LocalDate today = LocalDate.now();
+		LocalDate soon = LocalDate.now().plusDays(3);
+		DateRange dr = new DateRange(today, soon);
+		
+		BikeProvider bpr1 = null;
+		try{
+			bpr1 = brs.getProviderWithID(bpr1ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		BikeProvider bpr2 = null;
+		try{
+			bpr2 = brs.getProviderWithID(bpr2ID);
+		}catch(Exception e)
+		{
+			assertTrue(false,"exception when getting provider");
+		}
+		
+		BigDecimal price   = bpr1.getPricingPolicy().calculatePrice(oneBike, dr);
+		BigDecimal deposit = null;
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr2ID).getBikeWithCode(b4), 
+							 brs.getProviderWithID(bpr2ID).getBikeWithCode(b4).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+		
+		Quote q1 = null;
+		try {
+			q1 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, oneBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
 
-        boolean success1 = c.orderQuote(q1, ECollectionMode.PICKUP);
-        
-        assertTrue(success1, "The first quote could not be ordered even though the provider has one suitable bike");
-        
-        price = bpr1.getPricingPolicy().calculatePrice(otherBike, dr);
-        try {
-            deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr2ID).getBikeWithCode(b5), 
-                             brs.getProviderWithID(bpr2ID).getBikeWithCode(b5).getManufactureDate());
-        } catch (Exception e) {
-            assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
-        }
-        
-        Quote q2 = null;
-        try {
-            q2 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, otherBike, dr);
-        } catch (Exception e) {
-            assertTrue(false, "Exception occurred when getting provider");
-        }
-        
-        boolean success2 = c.orderQuote(q2, ECollectionMode.DELIVERY);
-        
-        assertFalse(success2, "The second quote was ordered, even though the 1st provider only has one bike of the needed type");
-    }
-    /////////////////////////END TESTS FOR BOOKING A QUOTE/////////////////////
+		boolean success1 = c.orderQuote(q1, ECollectionMode.PICKUP);
+		
+		assertTrue(success1, "The first quote could not be ordered even though the provider has one suitable bike");
+		
+		price = bpr1.getPricingPolicy().calculatePrice(otherBike, dr);
+		try {
+			deposit = bpr1.getValuationPolicy().calculateValue(brs.getProviderWithID(bpr2ID).getBikeWithCode(b5), 
+							 brs.getProviderWithID(bpr2ID).getBikeWithCode(b5).getManufactureDate());
+		} catch (Exception e) {
+			assertTrue(false, "An error occurred when getting the bike with the appropriate ID");
+		}
+		
+		Quote q2 = null;
+		try {
+			q2 = new Quote(brs.getProviderWithID(bpr1ID) , price, deposit, otherBike, dr);
+		} catch (Exception e) {
+			assertTrue(false, "Exception occurred when getting provider");
+		}
+		
+		boolean success2 = c.orderQuote(q2, ECollectionMode.DELIVERY);
+		
+		assertFalse(success2, "The second quote was ordered, even though the 1st provider only has one bike of the needed type");
+	}
+	/////////////////////////END TESTS FOR BOOKING A QUOTE/////////////////////
 
     @Test
     void returningBikeToOriginalProvider()
